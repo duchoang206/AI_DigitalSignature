@@ -95,7 +95,7 @@ class App(tk.Tk):
         ).pack(side="left", padx=20, pady=10)
         tk.Label(
             hdr,
-            text="Khóa luận tốt nghiệp — Nguyễn Duy Cao",
+            text="Xây dựng phần mềm",
             bg=ACCENT, fg="#ddd6fe",
             font=FONT_SMALL
         ).pack(side="right", padx=20)
@@ -566,25 +566,45 @@ class App(tk.Tk):
         )
 
     def __guard_simulate(self):
-        """Mô phỏng tấn công brute-force từ một IP."""
+        """Kịch bản mô phỏng: Bình thường -> Bị AI cảnh báo -> Bị chặn"""
         import random
         attacker = self.guard_ip_var.get().strip() or "10.0.0.99"
-        self._guard_log(f"\n{'─'*60}")
-        self._guard_log(f"⚡ Bắt đầu mô phỏng tấn công từ {attacker} ...")
-        for i in range(70):
+        self._guard_log(f"\n{'━'*70}")
+        self._guard_log(f"🚀 BẮT ĐẦU KỊCH BẢN MÔ PHỎNG TỪ IP: {attacker}")
+        
+        # --- GIAI ĐOẠN 1: Truy cập bình thường ---
+        self._guard_log(f"\n[GIAI ĐOẠN 1] Lưu lượng bình thường (Tỷ lệ thành công cao)...")
+        for i in range(1, 6):
+            ok = random.random() > 0.2  # 80% thành công (như người dùng thật)
+            result = self.guardian.check(attacker, success=ok, message=f"normal_msg_{i}")
+            self._log_simulate_result(i, result)
+            time.sleep(1.2) # Cách nhau > 1s để không dính luật Burst
+
+        # --- GIAI ĐOẠN 2: Tấn công Brute-force ---
+        self._guard_log(f"\n[GIAI ĐOẠN 2] Hacker bắt đầu tấn công dồn dập (Sai mật khẩu/chữ ký liên tục)...")
+        for i in range(6, 40):
             ok = random.random() > 0.9  # 90% thất bại
-            result = self.guardian.check(attacker, success=ok, message=f"msg_{i}")
-            ts = time.strftime("%H:%M:%S")
-            icon = {"allow": "✅", "warn": "⚠️", "block": "🚫"}.get(result["status"], "?")
-            self._guard_log(
-                f"[{ts}] req#{i+1:02d} {icon} {result['status']:6s} "
-                f"score={result['score']:.3f}  {result['reason']}"
-            )
+            result = self.guardian.check(attacker, success=ok, message=f"spam_msg_{i}")
+            self._log_simulate_result(i, result)
+            
             if result["status"] == "block":
-                self._guard_log(f"🚫 IP {attacker} đã bị chặn sau {i+1} request!")
+                self._guard_log(f"\n🚫 HỆ THỐNG PHÒNG VỆ: Đã chặn đứng IP {attacker} tại request thứ {i}!")
                 break
-            time.sleep(0.05)
-        self._guard_log(f"{'─'*60}\n")
+            time.sleep(0.3) # Gửi dồn dập
+            
+        self._guard_log(f"{'━'*70}\n")
+
+    def _log_simulate_result(self, req_id, result):
+        """Hàm phụ trợ in log đẹp mắt cho mô phỏng"""
+        ts = time.strftime("%H:%M:%S")
+        icon = {"allow": "✅", "warn": "⚠️", "block": "🚫"}.get(result["status"], "❓")
+        
+        # In ra màn hình log
+        self._guard_log(
+            f"[{ts}] Req #{req_id:02d} | {icon} {result['status'].upper():5s} | "
+            f"AI Score: {result['score']:.3f} | "
+            f"Layer: {result['layer']:10s} | {result['reason']}"
+        )
 
     def _guard_add_whitelist(self):
         ip = self.guard_ip_var.get().strip()
