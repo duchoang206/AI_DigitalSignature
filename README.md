@@ -1,4 +1,4 @@
-# AI-ECDSA Digital Signature System 🔐
+# AI-ECDSA Digital Signature System 
 
 Hệ thống xác thực người dùng và chữ ký số dựa trên thuật toán ECDSA/ECGDSA, tích hợp lớp bảo vệ thông minh **AI IP Guardian** để ngăn chặn các hành vi tấn công mạng.
 
