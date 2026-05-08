@@ -1,7 +1,7 @@
 # 🔐 AI-ECDSA Digital Signature System
 
 > Đường cong Elliptic và ứng dụng trong Chữ ký số, tích hợp AI phát hiện IP nghi vấn  
-> Đại học Quốc gia Hà Nội, 2024
+> Đại học Quốc gia Hà Nội, 2026
 
 ---
 
