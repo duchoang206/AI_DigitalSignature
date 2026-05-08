@@ -95,7 +95,7 @@ class App(tk.Tk):
         ).pack(side="left", padx=20, pady=10)
         tk.Label(
             hdr,
-            text="Xây dựng phần mềm",
+            text="Khóa luận tốt nghiệp — Nguyễn Duy Cao",
             bg=ACCENT, fg="#ddd6fe",
             font=FONT_SMALL
         ).pack(side="right", padx=20)
@@ -129,38 +129,29 @@ class App(tk.Tk):
     # ── Status bar ────────────────────────────────────
     def _build_status_bar(self):
         self.status_var = tk.StringVar(value="✅  Sẵn sàng")
-        bar = tk.Label(self, textvariable=self.status_var,
-                       bg=PANEL, fg=SUCCESS, font=FONT_SMALL,
-                       anchor="w", padx=12, pady=4)
-        bar.pack(fill="x", side="bottom")
-
-    def _set_status(self, msg, color=SUCCESS):
-        self.status_var.set(msg)
-        bar = self.nametowidget(self.status_var)
-        try:
-            bar.configure(fg=color)
-        except Exception:
-            pass
+        tk.Label(self, textvariable=self.status_var,
+                 bg=PANEL, fg=SUCCESS, font=FONT_SMALL,
+                 anchor="w", padx=12, pady=4).pack(fill="x", side="bottom")
 
     # ══════════════════════════════════════════════════
     # TAB 1 — Chữ ký số
     # ══════════════════════════════════════════════════
 
     def _build_tab_signature(self, parent):
-        # ── left panel ──
         left = tk.Frame(parent, bg=PANEL, bd=0)
         left.pack(side="left", fill="y", padx=(12, 6), pady=12, ipadx=10, ipady=10)
 
         tk.Label(left, text="⚙️  Cấu hình", bg=PANEL, fg=ACCENT2,
-                 font=FONT_TITLE).grid(row=0, column=0, columnspan=2,
+                 font=FONT_TITLE).grid(row=0, column=0, columnspan=3,
                                        sticky="w", padx=8, pady=(8, 4))
 
-        # Chọn đường cong
+        # Chọn đường cong — FIX: chỉ hiện curves h=1
         make_label(left, "Đường cong:").grid(row=1, column=0, sticky="w", padx=8)
         self.sig_curve_var = tk.StringVar(value="secp112r1")
         curve_cb = ttk.Combobox(left, textvariable=self.sig_curve_var,
-                                values=get_available_curves(), width=18, state="readonly")
-        curve_cb.grid(row=1, column=1, sticky="w", padx=8, pady=3)
+                                values=get_available_curves(ecdsa_only=True),
+                                width=18, state="readonly")
+        curve_cb.grid(row=1, column=1, columnspan=2, sticky="w", padx=8, pady=3)
 
         # Chọn thuật toán
         make_label(left, "Thuật toán:").grid(row=2, column=0, sticky="w", padx=8)
@@ -170,41 +161,34 @@ class App(tk.Tk):
                            bg=PANEL, fg=FG, selectcolor=PANEL, activebackground=PANEL,
                            font=FONT_BODY).grid(row=2, column=1+i, sticky="w", padx=4, pady=3)
 
-        # Nút tạo khóa
         btn_gen = tk.Button(left, text="🔑  Tạo cặp khóa",
                             command=self._sig_generate_keys)
         style_btn(btn_gen, ACCENT)
         btn_gen.grid(row=3, column=0, columnspan=3, pady=(10, 4), padx=8, sticky="ew")
 
-        # Private key
         make_label(left, "Khóa riêng (d):").grid(row=4, column=0, columnspan=3,
                                                    sticky="w", padx=8, pady=(8, 0))
         self.sig_priv_txt = make_text(left, height=3, width=38)
         self.sig_priv_txt.grid(row=5, column=0, columnspan=3, padx=8, pady=2)
 
-        # Public key
         make_label(left, "Khóa công khai (Q):").grid(row=6, column=0, columnspan=3,
                                                       sticky="w", padx=8, pady=(6, 0))
         self.sig_pub_txt = make_text(left, height=4, width=38)
         self.sig_pub_txt.grid(row=7, column=0, columnspan=3, padx=8, pady=2)
 
-        # Thời gian
         self.sig_keytime_var = tk.StringVar()
         tk.Label(left, textvariable=self.sig_keytime_var, bg=PANEL,
                  fg=FG_MUTED, font=FONT_SMALL).grid(row=8, column=0, columnspan=3, padx=8)
 
-        # ── right panel ──
         right = tk.Frame(parent, bg=BG)
         right.pack(side="left", fill="both", expand=True, padx=(6, 12), pady=12)
 
-        # Message
         tk.Label(right, text="📝  Văn bản cần ký:", bg=BG, fg=FG,
                  font=FONT_BODY).pack(anchor="w", padx=4)
         self.sig_msg_txt = make_text(right, height=5, width=65)
         self.sig_msg_txt.pack(fill="x", padx=4, pady=(2, 8))
         self.sig_msg_txt.insert("1.0", "hello world")
 
-        # Nút ký / xác thực
         btn_frame = tk.Frame(right, bg=BG)
         btn_frame.pack(fill="x", padx=4, pady=4)
         btn_sign = tk.Button(btn_frame, text="✍️  Ký số", command=self._sig_sign)
@@ -217,21 +201,19 @@ class App(tk.Tk):
         style_btn(btn_clear, "#475569")
         btn_clear.pack(side="left", padx=6)
 
-        # Output
         tk.Label(right, text="📤  Kết quả:", bg=BG, fg=FG,
                  font=FONT_BODY).pack(anchor="w", padx=4, pady=(10, 2))
         self.sig_out_txt = make_text(right, height=18, width=65)
         self.sig_out_txt.pack(fill="both", expand=True, padx=4)
 
-        # State
         self._sig_private_key = None
         self._sig_public_key  = None
         self._sig_signature   = None
         self._sig_curve       = None
+        self._sig_engine      = None
 
     def _run_in_thread(self, fn, *args):
-        t = threading.Thread(target=fn, args=args, daemon=True)
-        t.start()
+        threading.Thread(target=fn, args=args, daemon=True).start()
 
     def _sig_generate_keys(self):
         self._run_in_thread(self.__sig_generate_keys)
@@ -241,14 +223,11 @@ class App(tk.Tk):
         self.sig_out_txt.insert(tk.END, "⏳ Đang tạo cặp khóa...\n")
 
         t0 = time.time()
-        curve_name = self.sig_curve_var.get()
-        self._sig_curve = EllipticCurve(curve_name)
+        curve_name       = self.sig_curve_var.get()
+        self._sig_curve  = EllipticCurve(curve_name)
+        algo             = self.sig_algo_var.get()
 
-        algo = self.sig_algo_var.get()
-        if algo == "ECDSA":
-            engine = ECDSA(self._sig_curve)
-        else:
-            engine = ECGDSA(self._sig_curve)
+        engine = ECDSA(self._sig_curve) if algo == "ECDSA" else ECGDSA(self._sig_curve)
         self._sig_engine = engine
 
         d, Q = engine.generate_keypair()
@@ -258,15 +237,13 @@ class App(tk.Tk):
 
         self.sig_priv_txt.delete("1.0", tk.END)
         self.sig_priv_txt.insert(tk.END, str(d))
-
         self.sig_pub_txt.delete("1.0", tk.END)
         self.sig_pub_txt.insert(tk.END, f"x = {Q.x}\ny = {Q.y}")
-
         self.sig_keytime_var.set(f"⏱ Tạo khóa: {elapsed*1000:.1f} ms")
 
-        self.sig_out_txt.delete("1.0", tk.END)
         c = self._sig_curve
-        info = (
+        self.sig_out_txt.delete("1.0", tk.END)
+        self.sig_out_txt.insert(tk.END,
             f"=== Tham số đường cong {curve_name} ===\n"
             f"p = {c.p}\n"
             f"a = {c.a}\n"
@@ -278,9 +255,9 @@ class App(tk.Tk):
             f"=== Cặp khóa ({algo}) ===\n"
             f"Khóa riêng d  = {d}\n"
             f"Khóa công khai:\n  x = {Q.x}\n  y = {Q.y}\n\n"
-            f"✅ Tạo khóa thành công trong {elapsed*1000:.1f} ms"
+            f"✅ Tạo khóa thành công trong {elapsed*1000:.1f} ms\n"
+            f"[Ghi chú: khóa được sinh bằng CSPRNG (secrets module)]\n"
         )
-        self.sig_out_txt.insert(tk.END, info)
 
     def _sig_sign(self):
         self._run_in_thread(self.__sig_sign)
@@ -322,12 +299,11 @@ class App(tk.Tk):
         elapsed = time.time() - t0
 
         result = "✅ HỢP LỆ" if ok else "❌ KHÔNG HỢP LỆ"
-        color_line = "=" * 50
         self.sig_out_txt.insert(tk.END,
-            f"\n{color_line}\n"
+            f"\n{'='*50}\n"
             f"Kết quả xác thực: {result}\n"
             f"⏱ Xác thực trong {elapsed*1000:.1f} ms\n"
-            f"{color_line}\n"
+            f"{'='*50}\n"
         )
 
     def _sig_clear(self):
@@ -353,8 +329,9 @@ class App(tk.Tk):
 
         make_label(left, "Đường cong:").grid(row=1, column=0, sticky="w", padx=8)
         self.enc_curve_var = tk.StringVar(value="secp112r1")
+        # ElGamal có thể dùng tất cả curves
         ttk.Combobox(left, textvariable=self.enc_curve_var,
-                     values=get_available_curves(), width=18,
+                     values=get_available_curves(ecdsa_only=False), width=18,
                      state="readonly").grid(row=1, column=1, sticky="w", padx=8, pady=3)
 
         btn_gen = tk.Button(left, text="🔑  Tạo khóa Bob",
@@ -387,32 +364,31 @@ class App(tk.Tk):
 
         btn_frame = tk.Frame(right, bg=BG)
         btn_frame.pack(fill="x", padx=4, pady=4)
-        tk.Button(btn_frame, text="🔐  Mã hóa",
-                  command=lambda: self._run_in_thread(self.__enc_encrypt)
-                  ).pack(side="left", padx=6)
-        style_btn(btn_frame.winfo_children()[-1], ACCENT)
-        tk.Button(btn_frame, text="🔓  Giải mã",
-                  command=lambda: self._run_in_thread(self.__enc_decrypt)
-                  ).pack(side="left", padx=6)
-        style_btn(btn_frame.winfo_children()[-1], SUCCESS)
+        btn_enc = tk.Button(btn_frame, text="🔐  Mã hóa",
+                            command=lambda: self._run_in_thread(self.__enc_encrypt))
+        style_btn(btn_enc, ACCENT)
+        btn_enc.pack(side="left", padx=6)
+        btn_dec = tk.Button(btn_frame, text="🔓  Giải mã",
+                            command=lambda: self._run_in_thread(self.__enc_decrypt))
+        style_btn(btn_dec, SUCCESS)
+        btn_dec.pack(side="left", padx=6)
 
         tk.Label(right, text="📤  Kết quả:", bg=BG, fg=FG,
                  font=FONT_BODY).pack(anchor="w", padx=4, pady=(10, 2))
         self.enc_out_txt = make_text(right, height=20, width=65)
         self.enc_out_txt.pack(fill="both", expand=True, padx=4)
 
-        self._enc_private_key = None
-        self._enc_public_key  = None
-        self._enc_ciphertext  = None
-        self._enc_curve       = None
+        self._enc_private_key     = None
+        self._enc_public_key      = None
+        self._enc_ciphertext      = None
         self._enc_plaintext_point = None
+        self._enc_engine          = None
 
     def __enc_gen_keys(self):
         t0 = time.time()
-        self._enc_curve = EllipticCurve(self.enc_curve_var.get())
-        engine = ECElGamal(self._enc_curve)
-        self._enc_engine = engine
-        s, B = engine.generate_keypair()
+        self._enc_curve  = EllipticCurve(self.enc_curve_var.get())
+        self._enc_engine = ECElGamal(self._enc_curve)
+        s, B = self._enc_engine.generate_keypair()
         self._enc_private_key = s
         self._enc_public_key  = B
         elapsed = time.time() - t0
@@ -422,7 +398,6 @@ class App(tk.Tk):
         self.enc_pub_txt.delete("1.0", tk.END)
         self.enc_pub_txt.insert(tk.END, f"x = {B.x}\ny = {B.y}")
         self.enc_keytime_var.set(f"⏱ Tạo khóa: {elapsed*1000:.1f} ms")
-
         self.enc_out_txt.delete("1.0", tk.END)
         self.enc_out_txt.insert(tk.END,
             f"✅ Đã tạo cặp khóa Bob ({self.enc_curve_var.get()}) "
@@ -438,7 +413,7 @@ class App(tk.Tk):
             return
         t0 = time.time()
         (M1, M2), M = self._enc_engine.encrypt(msg, self._enc_public_key)
-        self._enc_ciphertext = (M1, M2)
+        self._enc_ciphertext      = (M1, M2)
         self._enc_plaintext_point = M
         elapsed = time.time() - t0
 
@@ -462,7 +437,6 @@ class App(tk.Tk):
 
         ok = self._enc_engine.points_equal(M_dec, self._enc_plaintext_point)
         status = "✅ Giải mã THÀNH CÔNG — điểm trùng khớp" if ok else "❌ Điểm không khớp"
-
         self.enc_out_txt.insert(tk.END,
             f"\n=== Giải mã ===\n"
             f"Điểm M giải mã:\n  x={M_dec.x}\n  y={M_dec.y}\n\n"
@@ -476,7 +450,6 @@ class App(tk.Tk):
     # ══════════════════════════════════════════════════
 
     def _build_tab_guardian(self, parent):
-        # Cấu hình
         top = tk.Frame(parent, bg=PANEL)
         top.pack(fill="x", padx=12, pady=(12, 6), ipady=8, ipadx=8)
 
@@ -500,8 +473,7 @@ class App(tk.Tk):
                        bg=PANEL, fg=FG, selectcolor=PANEL, activebackground=PANEL,
                        font=FONT_BODY).pack(side="left", padx=10)
 
-        btn_check = tk.Button(top, text="🔍  Kiểm tra",
-                              command=self._guard_check)
+        btn_check = tk.Button(top, text="🔍  Kiểm tra", command=self._guard_check)
         style_btn(btn_check, ACCENT)
         btn_check.pack(side="left", padx=8)
 
@@ -515,12 +487,16 @@ class App(tk.Tk):
         style_btn(btn_wl, SUCCESS)
         btn_wl.pack(side="left", padx=4)
 
-        btn_reset = tk.Button(top, text="🔄  Reset IP",
-                              command=self._guard_reset)
+        btn_reset = tk.Button(top, text="🔄  Reset IP", command=self._guard_reset)
         style_btn(btn_reset, "#475569")
         btn_reset.pack(side="left", padx=4)
 
-        # Log area
+        # FIX: thêm nút xem danh sách bị block
+        btn_blocked = tk.Button(top, text="🚫  Xem Blocked",
+                                command=self._guard_show_blocked)
+        style_btn(btn_blocked, "#7c2d12")
+        btn_blocked.pack(side="left", padx=4)
+
         mid = tk.Frame(parent, bg=BG)
         mid.pack(fill="both", expand=True, padx=12, pady=6)
 
@@ -529,82 +505,57 @@ class App(tk.Tk):
         self.guard_log_txt = make_text(mid, height=22, width=100)
         self.guard_log_txt.pack(fill="both", expand=True)
 
-        # Stats bar
         self.guard_stats_var = tk.StringVar(value="Chưa có thống kê")
         tk.Label(parent, textvariable=self.guard_stats_var,
                  bg=PANEL, fg=FG_MUTED, font=FONT_SMALL,
                  anchor="w", padx=12, pady=4).pack(fill="x", padx=12)
 
-    def _guard_log(self, msg, color=None):
+    def _guard_log(self, msg):
         self.guard_log_txt.insert(tk.END, msg + "\n")
         self.guard_log_txt.see(tk.END)
 
     def _guard_check(self):
-        ip  = self.guard_ip_var.get().strip()
-        msg = self.guard_msg_var.get().strip()
-        ok  = self.guard_success_var.get()
-
+        ip     = self.guard_ip_var.get().strip()
+        msg    = self.guard_msg_var.get().strip()
+        ok     = self.guard_success_var.get()
         result = self.guardian.check(ip, success=ok, message=msg)
-        status_color = {
-            "allow": "✅",
-            "warn":  "⚠️",
-            "block": "🚫",
-        }.get(result["status"], "❓")
 
-        ts = time.strftime("%H:%M:%S")
-        log = (
-            f"[{ts}] {status_color} {result['status'].upper():6s} "
+        icon = {"allow": "✅", "warn": "⚠️", "block": "🚫"}.get(result["status"], "❓")
+        ts   = time.strftime("%H:%M:%S")
+        self._guard_log(
+            f"[{ts}] {icon} {result['status'].upper():6s} "
             f"IP={ip:<18} Layer={result['layer']:<12} "
             f"Score={result['score']:.3f}  {result['reason']}"
         )
-        self._guard_log(log)
 
         stats = self.guardian.get_stats(ip)
         self.guard_stats_var.set(
             f"IP {ip} → total={stats['total']}  fail={stats['fail']}  "
-            f"fail_rate={stats['fail_rate']:.0%}  unique_msgs={stats['unique_msgs']}"
+            f"fail_rate={stats['fail_rate']:.0%}  "
+            f"unique_msgs={stats['unique_msgs']}  "
+            f"blocked={'YEP 🚫' if stats['is_blocked'] else 'no'}"
         )
 
     def __guard_simulate(self):
-        """Kịch bản mô phỏng: Bình thường -> Bị AI cảnh báo -> Bị chặn"""
+        """Mô phỏng tấn công brute-force từ một IP."""
         import random
         attacker = self.guard_ip_var.get().strip() or "10.0.0.99"
-        self._guard_log(f"\n{'━'*70}")
-        self._guard_log(f"🚀 BẮT ĐẦU KỊCH BẢN MÔ PHỎNG TỪ IP: {attacker}")
-        
-        # --- GIAI ĐOẠN 1: Truy cập bình thường ---
-        self._guard_log(f"\n[GIAI ĐOẠN 1] Lưu lượng bình thường (Tỷ lệ thành công cao)...")
-        for i in range(1, 6):
-            ok = random.random() > 0.2  # 80% thành công (như người dùng thật)
-            result = self.guardian.check(attacker, success=ok, message=f"normal_msg_{i}")
-            self._log_simulate_result(i, result)
-            time.sleep(1.2) # Cách nhau > 1s để không dính luật Burst
-
-        # --- GIAI ĐOẠN 2: Tấn công Brute-force ---
-        self._guard_log(f"\n[GIAI ĐOẠN 2] Hacker bắt đầu tấn công dồn dập (Sai mật khẩu/chữ ký liên tục)...")
-        for i in range(6, 40):
-            ok = random.random() > 0.9  # 90% thất bại
-            result = self.guardian.check(attacker, success=ok, message=f"spam_msg_{i}")
-            self._log_simulate_result(i, result)
-            
+        self._guard_log(f"\n{'─'*60}")
+        self._guard_log(f"⚡ Bắt đầu mô phỏng tấn công từ {attacker} ...")
+        for i in range(70):
+            ok = random.random() > 0.9
+            result = self.guardian.check(attacker, success=ok, message=f"msg_{i}")
+            ts   = time.strftime("%H:%M:%S")
+            icon = {"allow": "✅", "warn": "⚠️", "block": "🚫"}.get(result["status"], "?")
+            self._guard_log(
+                f"[{ts}] req#{i+1:02d} {icon} {result['status']:6s} "
+                f"score={result['score']:.3f}  {result['reason']}"
+            )
             if result["status"] == "block":
-                self._guard_log(f"\n🚫 HỆ THỐNG PHÒNG VỆ: Đã chặn đứng IP {attacker} tại request thứ {i}!")
+                self._guard_log(f"🚫 IP {attacker} đã bị chặn sau {i+1} request!")
                 break
-            time.sleep(0.3) # Gửi dồn dập
-            
-        self._guard_log(f"{'━'*70}\n")
-
-    def _log_simulate_result(self, req_id, result):
-        """Hàm phụ trợ in log đẹp mắt cho mô phỏng"""
-        ts = time.strftime("%H:%M:%S")
-        icon = {"allow": "✅", "warn": "⚠️", "block": "🚫"}.get(result["status"], "❓")
-        
-        # In ra màn hình log
-        self._guard_log(
-            f"[{ts}] Req #{req_id:02d} | {icon} {result['status'].upper():5s} | "
-            f"AI Score: {result['score']:.3f} | "
-            f"Layer: {result['layer']:10s} | {result['reason']}"
-        )
+            time.sleep(0.05)
+        self._guard_log(f"{'─'*60}\n")
 
     def _guard_add_whitelist(self):
         ip = self.guard_ip_var.get().strip()
@@ -614,7 +565,21 @@ class App(tk.Tk):
     def _guard_reset(self):
         ip = self.guard_ip_var.get().strip()
         self.guardian.reset_ip(ip)
-        self._guard_log(f"[RESET] 🔄 Đã reset thống kê cho IP {ip}")
+        self._guard_log(f"[RESET] 🔄 Đã reset thống kê và trạng thái block cho IP {ip}")
+
+    def _guard_show_blocked(self):
+        """FIX: hiển thị danh sách IP đang bị block."""
+        blocked = self.guardian.get_blocked_list()
+        self._guard_log(f"\n{'─'*60}")
+        self._guard_log(f"🚫 Danh sách IP đang bị block ({len(blocked)} IP):")
+        if not blocked:
+            self._guard_log("  (trống)")
+        else:
+            for ip, info in blocked.items():
+                t = time.strftime("%H:%M:%S", time.localtime(info["time"]))
+                self._guard_log(f"  {ip:<20} Layer={info['layer']:<12} "
+                                f"Lúc={t}  {info['reason']}")
+        self._guard_log(f"{'─'*60}\n")
 
 
 # ── Entry point ───────────────────────────────────────
