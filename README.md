@@ -1,8 +1,7 @@
 # 🔐 AI-ECDSA Digital Signature System
 
-> **Khóa luận tốt nghiệp** — Nguyễn Duy Cao  
 > Đường cong Elliptic và ứng dụng trong Chữ ký số, tích hợp AI phát hiện IP nghi vấn  
-> Trường Đại học Công nghệ — Đại học Quốc gia Hà Nội, 2024
+> Đại học Quốc gia Hà Nội, 2024
 
 ---
 
