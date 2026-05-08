@@ -1,11 +1,10 @@
-# main_app.py — Giao diện Tkinter cho AI-ECDSA Digital Signature System
-
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+import customtkinter as ctk
+import tkinter.messagebox as messagebox
 import threading
 import time
 import sys
 import os
+from PIL import Image
 
 # Đường dẫn
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
@@ -15,69 +14,28 @@ from src.core.ecdsa import ECDSA, ECGDSA
 from src.core.ec_elgamal import ECElGamal
 from src.ai.ip_guardian import IPGuardian
 
+# ================= Thiết lập Giao diện Surface =================
+ctk.set_appearance_mode("Light")  # Giao diện sáng
+ctk.set_default_color_theme("blue")  # Tông màu xanh Surface
 
-# ══════════════════════════════════════════════════════
-# Màu sắc & Style
-# ══════════════════════════════════════════════════════
-BG         = "#1e1e2e"
-PANEL      = "#2a2a3e"
-ACCENT     = "#7c3aed"
-ACCENT2    = "#06b6d4"
-SUCCESS    = "#10b981"
-WARNING    = "#f59e0b"
-DANGER     = "#ef4444"
-FG         = "#e2e8f0"
-FG_MUTED   = "#94a3b8"
-ENTRY_BG   = "#0f172a"
-BTN_FG     = "#ffffff"
+# Màu sắc tùy chỉnh cho các trạng thái
+SUCCESS_COLOR = "#10b981"
+WARNING_COLOR = "#f59e0b"
+DANGER_COLOR = "#ef4444"
+MUTED_TEXT = "#64748b"
 
-FONT_TITLE = ("Consolas", 14, "bold")
-FONT_BODY  = ("Consolas", 10)
-FONT_SMALL = ("Consolas", 9)
-FONT_MONO  = ("Courier New", 9)
-
-
-def style_btn(btn, color=ACCENT):
-    btn.configure(
-        bg=color, fg=BTN_FG,
-        activebackground=color, activeforeground=BTN_FG,
-        relief="flat", cursor="hand2",
-        padx=10, pady=6, font=FONT_BODY
-    )
-
-
-def make_label(parent, text, color=FG_MUTED, font=FONT_SMALL, **kw):
-    return tk.Label(parent, text=text, bg=PANEL, fg=color, font=font, **kw)
-
-
-def make_entry(parent, width=45, show=""):
-    e = tk.Entry(parent, width=width, bg=ENTRY_BG, fg=FG,
-                 insertbackground=FG, relief="flat", font=FONT_MONO, show=show)
-    return e
-
-
-def make_text(parent, height=6, width=60):
-    t = scrolledtext.ScrolledText(
-        parent, height=height, width=width,
-        bg=ENTRY_BG, fg=FG, insertbackground=FG,
-        relief="flat", font=FONT_MONO, wrap=tk.WORD
-    )
-    return t
-
-
-# ══════════════════════════════════════════════════════
-# Cửa sổ chính
-# ══════════════════════════════════════════════════════
-
-class App(tk.Tk):
+class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("AI-ECDSA Digital Signature System")
-        self.configure(bg=BG)
-        self.geometry("1100x760")
-        self.resizable(True, True)
+        self.title("AI-ECDSA Digital Signature System - Surface Edition")
+        self.geometry("1200x800")
+        self.minsize(1000, 700)
 
         self.guardian = IPGuardian()
+
+        # Layout chính
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
         self._build_header()
         self._build_notebook()
@@ -85,42 +43,39 @@ class App(tk.Tk):
 
     # ── Header ────────────────────────────────────────
     def _build_header(self):
-        hdr = tk.Frame(self, bg=ACCENT, height=50)
-        hdr.pack(fill="x")
-        tk.Label(
-            hdr,
-            text="🔐  AI-ECDSA Digital Signature System",
-            bg=ACCENT, fg=BTN_FG,
-            font=("Consolas", 15, "bold")
-        ).pack(side="left", padx=20, pady=10)
-        tk.Label(
-            hdr,
-            text="Khóa luận tốt nghiệp — Nguyễn Duy Cao",
-            bg=ACCENT, fg="#ddd6fe",
-            font=FONT_SMALL
-        ).pack(side="right", padx=20)
+        self.hdr_frame = ctk.CTkFrame(self, fg_color="#F8F9FA", corner_radius=0, height=60)
+        self.hdr_frame.grid(row=0, column=0, sticky="ew")
+        self.hdr_frame.grid_columnconfigure(1, weight=1)
+
+        # Cố gắng load Logo (nếu có)
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        logo_path = os.path.join(base_dir, "image_2c19ae.png") # Thay bằng tên ảnh của bạn
+        
+        try:
+            logo_img_data = Image.open(logo_path)
+            logo_image = ctk.CTkImage(light_image=logo_img_data, size=(40, 40))
+            logo_label = ctk.CTkLabel(self.hdr_frame, image=logo_image, text="")
+            logo_label.grid(row=0, column=0, padx=(20, 10), pady=10)
+        except Exception:
+            logo_label = ctk.CTkLabel(self.hdr_frame, text="🔐", font=ctk.CTkFont(size=24))
+            logo_label.grid(row=0, column=0, padx=(20, 10), pady=10)
+
+        title_lbl = ctk.CTkLabel(self.hdr_frame, text="AI-ECDSA Digital Signature System", 
+                                 font=ctk.CTkFont(family="Consolas", size=18, weight="bold"), text_color="#1E293B")
+        title_lbl.grid(row=0, column=1, sticky="w")
+
+        author_lbl = ctk.CTkLabel(self.hdr_frame, text="Khóa luận tốt nghiệp — Nguyễn Duy Cao", 
+                                  font=ctk.CTkFont(size=12), text_color=MUTED_TEXT)
+        author_lbl.grid(row=0, column=2, padx=20, sticky="e")
 
     # ── Notebook (3 tab) ──────────────────────────────
     def _build_notebook(self):
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("TNotebook",           background=BG, borderwidth=0)
-        style.configure("TNotebook.Tab",       background=PANEL, foreground=FG_MUTED,
-                        font=FONT_BODY, padding=[14, 8])
-        style.map("TNotebook.Tab",
-                  background=[("selected", ACCENT)],
-                  foreground=[("selected", BTN_FG)])
+        self.tabview = ctk.CTkTabview(self, corner_radius=10)
+        self.tabview.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 0))
 
-        nb = ttk.Notebook(self)
-        nb.pack(fill="both", expand=True, padx=12, pady=10)
-
-        self.tab_sig    = tk.Frame(nb, bg=BG)
-        self.tab_enc    = tk.Frame(nb, bg=BG)
-        self.tab_guard  = tk.Frame(nb, bg=BG)
-
-        nb.add(self.tab_sig,   text="🔏  Chữ ký số (ECDSA / ECGDSA)")
-        nb.add(self.tab_enc,   text="🔒  Mã hóa EC ElGamal")
-        nb.add(self.tab_guard, text="🤖  AI IP Guardian")
+        self.tab_sig = self.tabview.add("🔏 Chữ ký số (ECDSA / ECGDSA)")
+        self.tab_enc = self.tabview.add("🔒 Mã hóa EC ElGamal")
+        self.tab_guard = self.tabview.add("🤖 AI IP Guardian")
 
         self._build_tab_signature(self.tab_sig)
         self._build_tab_elgamal(self.tab_enc)
@@ -128,83 +83,75 @@ class App(tk.Tk):
 
     # ── Status bar ────────────────────────────────────
     def _build_status_bar(self):
-        self.status_var = tk.StringVar(value="✅  Sẵn sàng")
-        tk.Label(self, textvariable=self.status_var,
-                 bg=PANEL, fg=SUCCESS, font=FONT_SMALL,
-                 anchor="w", padx=12, pady=4).pack(fill="x", side="bottom")
+        self.status_frame = ctk.CTkFrame(self, fg_color="transparent", height=30)
+        self.status_frame.grid(row=2, column=0, sticky="ew", padx=20, pady=5)
+        
+        self.status_var = ctk.StringVar(value="✅ Sẵn sàng")
+        self.status_label = ctk.CTkLabel(self.status_frame, textvariable=self.status_var, 
+                                         text_color=SUCCESS_COLOR, font=ctk.CTkFont(size=12, weight="bold"))
+        self.status_label.pack(side="left")
 
-    # ══════════════════════════════════════════════════
+    # ==================================================================
     # TAB 1 — Chữ ký số
-    # ══════════════════════════════════════════════════
-
+    # ==================================================================
     def _build_tab_signature(self, parent):
-        left = tk.Frame(parent, bg=PANEL, bd=0)
-        left.pack(side="left", fill="y", padx=(12, 6), pady=12, ipadx=10, ipady=10)
+        parent.grid_columnconfigure(1, weight=1)
+        parent.grid_rowconfigure(0, weight=1)
 
-        tk.Label(left, text="⚙️  Cấu hình", bg=PANEL, fg=ACCENT2,
-                 font=FONT_TITLE).grid(row=0, column=0, columnspan=3,
-                                       sticky="w", padx=8, pady=(8, 4))
+        # Cột Trái: Cấu hình
+        left = ctk.CTkFrame(parent, fg_color="#F1F5F9", width=350, corner_radius=10)
+        left.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        left.grid_propagate(False)
 
-        # Chọn đường cong — FIX: chỉ hiện curves h=1
-        make_label(left, "Đường cong:").grid(row=1, column=0, sticky="w", padx=8)
-        self.sig_curve_var = tk.StringVar(value="secp112r1")
-        curve_cb = ttk.Combobox(left, textvariable=self.sig_curve_var,
-                                values=get_available_curves(ecdsa_only=True),
-                                width=18, state="readonly")
-        curve_cb.grid(row=1, column=1, columnspan=2, sticky="w", padx=8, pady=3)
+        ctk.CTkLabel(left, text="⚙️ Cấu hình", font=ctk.CTkFont(size=16, weight="bold"), text_color="#334155").grid(row=0, column=0, columnspan=2, sticky="w", padx=15, pady=(15, 10))
 
-        # Chọn thuật toán
-        make_label(left, "Thuật toán:").grid(row=2, column=0, sticky="w", padx=8)
-        self.sig_algo_var = tk.StringVar(value="ECDSA")
-        for i, algo in enumerate(["ECDSA", "ECGDSA"]):
-            tk.Radiobutton(left, text=algo, variable=self.sig_algo_var, value=algo,
-                           bg=PANEL, fg=FG, selectcolor=PANEL, activebackground=PANEL,
-                           font=FONT_BODY).grid(row=2, column=1+i, sticky="w", padx=4, pady=3)
+        ctk.CTkLabel(left, text="Đường cong:").grid(row=1, column=0, sticky="w", padx=15, pady=5)
+        self.sig_curve_var = ctk.StringVar(value="secp112r1")
+        self.curve_cb = ctk.CTkComboBox(left, variable=self.sig_curve_var, values=get_available_curves(ecdsa_only=True), width=180)
+        self.curve_cb.grid(row=1, column=1, sticky="w", padx=10, pady=5)
 
-        btn_gen = tk.Button(left, text="🔑  Tạo cặp khóa",
-                            command=self._sig_generate_keys)
-        style_btn(btn_gen, ACCENT)
-        btn_gen.grid(row=3, column=0, columnspan=3, pady=(10, 4), padx=8, sticky="ew")
+        ctk.CTkLabel(left, text="Thuật toán:").grid(row=2, column=0, sticky="w", padx=15, pady=5)
+        self.sig_algo_var = ctk.StringVar(value="ECDSA")
+        algo_frame = ctk.CTkFrame(left, fg_color="transparent")
+        algo_frame.grid(row=2, column=1, sticky="w", padx=10, pady=5)
+        ctk.CTkRadioButton(algo_frame, text="ECDSA", variable=self.sig_algo_var, value="ECDSA").pack(side="left", padx=(0, 10))
+        ctk.CTkRadioButton(algo_frame, text="ECGDSA", variable=self.sig_algo_var, value="ECGDSA").pack(side="left")
 
-        make_label(left, "Khóa riêng (d):").grid(row=4, column=0, columnspan=3,
-                                                   sticky="w", padx=8, pady=(8, 0))
-        self.sig_priv_txt = make_text(left, height=3, width=38)
-        self.sig_priv_txt.grid(row=5, column=0, columnspan=3, padx=8, pady=2)
+        self.btn_gen = ctk.CTkButton(left, text="🔑 Tạo cặp khóa", command=self._sig_generate_keys)
+        self.btn_gen.grid(row=3, column=0, columnspan=2, pady=15, padx=15, sticky="ew")
 
-        make_label(left, "Khóa công khai (Q):").grid(row=6, column=0, columnspan=3,
-                                                      sticky="w", padx=8, pady=(6, 0))
-        self.sig_pub_txt = make_text(left, height=4, width=38)
-        self.sig_pub_txt.grid(row=7, column=0, columnspan=3, padx=8, pady=2)
+        ctk.CTkLabel(left, text="Khóa riêng (d):").grid(row=4, column=0, columnspan=2, sticky="w", padx=15)
+        self.sig_priv_txt = ctk.CTkTextbox(left, height=60, font=ctk.CTkFont("Consolas", 12))
+        self.sig_priv_txt.grid(row=5, column=0, columnspan=2, padx=15, pady=(0, 10), sticky="ew")
 
-        self.sig_keytime_var = tk.StringVar()
-        tk.Label(left, textvariable=self.sig_keytime_var, bg=PANEL,
-                 fg=FG_MUTED, font=FONT_SMALL).grid(row=8, column=0, columnspan=3, padx=8)
+        ctk.CTkLabel(left, text="Khóa công khai (Q):").grid(row=6, column=0, columnspan=2, sticky="w", padx=15)
+        self.sig_pub_txt = ctk.CTkTextbox(left, height=80, font=ctk.CTkFont("Consolas", 12))
+        self.sig_pub_txt.grid(row=7, column=0, columnspan=2, padx=15, pady=(0, 10), sticky="ew")
 
-        right = tk.Frame(parent, bg=BG)
-        right.pack(side="left", fill="both", expand=True, padx=(6, 12), pady=12)
+        self.sig_keytime_var = ctk.StringVar()
+        ctk.CTkLabel(left, textvariable=self.sig_keytime_var, text_color=MUTED_TEXT, font=ctk.CTkFont(size=11)).grid(row=8, column=0, columnspan=2, padx=15, pady=5)
 
-        tk.Label(right, text="📝  Văn bản cần ký:", bg=BG, fg=FG,
-                 font=FONT_BODY).pack(anchor="w", padx=4)
-        self.sig_msg_txt = make_text(right, height=5, width=65)
-        self.sig_msg_txt.pack(fill="x", padx=4, pady=(2, 8))
-        self.sig_msg_txt.insert("1.0", "hello world")
+        # Cột Phải: Xử lý
+        right = ctk.CTkFrame(parent, fg_color="transparent")
+        right.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        right.grid_columnconfigure(0, weight=1)
+        right.grid_rowconfigure(3, weight=1)
 
-        btn_frame = tk.Frame(right, bg=BG)
-        btn_frame.pack(fill="x", padx=4, pady=4)
-        btn_sign = tk.Button(btn_frame, text="✍️  Ký số", command=self._sig_sign)
-        style_btn(btn_sign, ACCENT)
-        btn_sign.pack(side="left", padx=6)
-        btn_verify = tk.Button(btn_frame, text="✅  Xác thực", command=self._sig_verify)
-        style_btn(btn_verify, SUCCESS)
-        btn_verify.pack(side="left", padx=6)
-        btn_clear = tk.Button(btn_frame, text="🗑  Xóa", command=self._sig_clear)
-        style_btn(btn_clear, "#475569")
-        btn_clear.pack(side="left", padx=6)
+        ctk.CTkLabel(right, text="📝 Văn bản cần ký:", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, sticky="w", pady=(0, 5))
+        self.sig_msg_txt = ctk.CTkTextbox(right, height=100, font=ctk.CTkFont("Consolas", 13))
+        self.sig_msg_txt.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.sig_msg_txt.insert("0.0", "hello world")
 
-        tk.Label(right, text="📤  Kết quả:", bg=BG, fg=FG,
-                 font=FONT_BODY).pack(anchor="w", padx=4, pady=(10, 2))
-        self.sig_out_txt = make_text(right, height=18, width=65)
-        self.sig_out_txt.pack(fill="both", expand=True, padx=4)
+        btn_frame = ctk.CTkFrame(right, fg_color="transparent")
+        btn_frame.grid(row=2, column=0, sticky="w", pady=(0, 10))
+        
+        ctk.CTkButton(btn_frame, text="✍️ Ký số", command=self._sig_sign).pack(side="left", padx=(0, 10))
+        ctk.CTkButton(btn_frame, text="✅ Xác thực", command=self._sig_verify, fg_color=SUCCESS_COLOR, hover_color="#059669").pack(side="left", padx=(0, 10))
+        ctk.CTkButton(btn_frame, text="🗑 Xóa", command=self._sig_clear, fg_color="#64748b", hover_color="#475569").pack(side="left")
+
+        ctk.CTkLabel(right, text="📤 Kết quả:", font=ctk.CTkFont(weight="bold")).grid(row=3, column=0, sticky="w", pady=(10, 5))
+        self.sig_out_txt = ctk.CTkTextbox(right, font=ctk.CTkFont("Consolas", 13))
+        self.sig_out_txt.grid(row=4, column=0, sticky="nsew")
 
         self._sig_private_key = None
         self._sig_public_key  = None
@@ -219,8 +166,8 @@ class App(tk.Tk):
         self._run_in_thread(self.__sig_generate_keys)
 
     def __sig_generate_keys(self):
-        self.sig_out_txt.delete("1.0", tk.END)
-        self.sig_out_txt.insert(tk.END, "⏳ Đang tạo cặp khóa...\n")
+        self.sig_out_txt.delete("0.0", "end")
+        self.sig_out_txt.insert("end", "⏳ Đang tạo cặp khóa...\n")
 
         t0 = time.time()
         curve_name       = self.sig_curve_var.get()
@@ -235,15 +182,15 @@ class App(tk.Tk):
         self._sig_public_key  = Q
         elapsed = time.time() - t0
 
-        self.sig_priv_txt.delete("1.0", tk.END)
-        self.sig_priv_txt.insert(tk.END, str(d))
-        self.sig_pub_txt.delete("1.0", tk.END)
-        self.sig_pub_txt.insert(tk.END, f"x = {Q.x}\ny = {Q.y}")
+        self.sig_priv_txt.delete("0.0", "end")
+        self.sig_priv_txt.insert("end", str(d))
+        self.sig_pub_txt.delete("0.0", "end")
+        self.sig_pub_txt.insert("end", f"x = {Q.x}\ny = {Q.y}")
         self.sig_keytime_var.set(f"⏱ Tạo khóa: {elapsed*1000:.1f} ms")
 
         c = self._sig_curve
-        self.sig_out_txt.delete("1.0", tk.END)
-        self.sig_out_txt.insert(tk.END,
+        self.sig_out_txt.delete("0.0", "end")
+        self.sig_out_txt.insert("end",
             f"=== Tham số đường cong {curve_name} ===\n"
             f"p = {c.p}\n"
             f"a = {c.a}\n"
@@ -266,7 +213,7 @@ class App(tk.Tk):
         if self._sig_private_key is None:
             messagebox.showwarning("Chưa tạo khóa", "Vui lòng tạo cặp khóa trước!")
             return
-        msg = self.sig_msg_txt.get("1.0", tk.END).strip()
+        msg = self.sig_msg_txt.get("0.0", "end").strip()
         if not msg:
             messagebox.showwarning("Thiếu văn bản", "Vui lòng nhập văn bản cần ký!")
             return
@@ -276,8 +223,8 @@ class App(tk.Tk):
         self._sig_signature = (r, s)
         elapsed = time.time() - t0
 
-        self.sig_out_txt.delete("1.0", tk.END)
-        self.sig_out_txt.insert(tk.END,
+        self.sig_out_txt.delete("0.0", "end")
+        self.sig_out_txt.insert("end",
             f"=== Chữ ký số ({self.sig_algo_var.get()}) ===\n"
             f"r = {r}\n"
             f"s = {s}\n\n"
@@ -292,14 +239,14 @@ class App(tk.Tk):
         if self._sig_signature is None:
             messagebox.showwarning("Chưa ký", "Vui lòng ký văn bản trước!")
             return
-        msg = self.sig_msg_txt.get("1.0", tk.END).strip()
+        msg = self.sig_msg_txt.get("0.0", "end").strip()
 
         t0 = time.time()
         ok = self._sig_engine.verify(msg, self._sig_signature, self._sig_public_key)
         elapsed = time.time() - t0
 
         result = "✅ HỢP LỆ" if ok else "❌ KHÔNG HỢP LỆ"
-        self.sig_out_txt.insert(tk.END,
+        self.sig_out_txt.insert("end",
             f"\n{'='*50}\n"
             f"Kết quả xác thực: {result}\n"
             f"⏱ Xác thực trong {elapsed*1000:.1f} ms\n"
@@ -307,76 +254,63 @@ class App(tk.Tk):
         )
 
     def _sig_clear(self):
-        self.sig_out_txt.delete("1.0", tk.END)
+        self.sig_out_txt.delete("0.0", "end")
         self._sig_private_key = None
         self._sig_public_key  = None
         self._sig_signature   = None
-        self.sig_priv_txt.delete("1.0", tk.END)
-        self.sig_pub_txt.delete("1.0", tk.END)
+        self.sig_priv_txt.delete("0.0", "end")
+        self.sig_pub_txt.delete("0.0", "end")
         self.sig_keytime_var.set("")
 
-    # ══════════════════════════════════════════════════
+    # ==================================================================
     # TAB 2 — EC ElGamal
-    # ══════════════════════════════════════════════════
-
+    # ==================================================================
     def _build_tab_elgamal(self, parent):
-        left = tk.Frame(parent, bg=PANEL)
-        left.pack(side="left", fill="y", padx=(12, 6), pady=12, ipadx=10, ipady=10)
+        parent.grid_columnconfigure(1, weight=1)
+        parent.grid_rowconfigure(0, weight=1)
 
-        tk.Label(left, text="⚙️  Cấu hình", bg=PANEL, fg=ACCENT2,
-                 font=FONT_TITLE).grid(row=0, column=0, columnspan=2,
-                                       sticky="w", padx=8, pady=(8, 4))
+        left = ctk.CTkFrame(parent, fg_color="#F1F5F9", width=350, corner_radius=10)
+        left.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        left.grid_propagate(False)
 
-        make_label(left, "Đường cong:").grid(row=1, column=0, sticky="w", padx=8)
-        self.enc_curve_var = tk.StringVar(value="secp112r1")
-        # ElGamal có thể dùng tất cả curves
-        ttk.Combobox(left, textvariable=self.enc_curve_var,
-                     values=get_available_curves(ecdsa_only=False), width=18,
-                     state="readonly").grid(row=1, column=1, sticky="w", padx=8, pady=3)
+        ctk.CTkLabel(left, text="⚙️ Cấu hình", font=ctk.CTkFont(size=16, weight="bold"), text_color="#334155").grid(row=0, column=0, columnspan=2, sticky="w", padx=15, pady=(15, 10))
 
-        btn_gen = tk.Button(left, text="🔑  Tạo khóa Bob",
-                            command=lambda: self._run_in_thread(self.__enc_gen_keys))
-        style_btn(btn_gen, ACCENT)
-        btn_gen.grid(row=2, column=0, columnspan=2, pady=(10, 4), padx=8, sticky="ew")
+        ctk.CTkLabel(left, text="Đường cong:").grid(row=1, column=0, sticky="w", padx=15, pady=5)
+        self.enc_curve_var = ctk.StringVar(value="secp112r1")
+        ctk.CTkComboBox(left, variable=self.enc_curve_var, values=get_available_curves(ecdsa_only=False), width=180).grid(row=1, column=1, sticky="w", padx=10, pady=5)
 
-        make_label(left, "Khóa riêng (s):").grid(row=3, column=0, columnspan=2,
-                                                   sticky="w", padx=8, pady=(8, 0))
-        self.enc_priv_txt = make_text(left, height=3, width=38)
-        self.enc_priv_txt.grid(row=4, column=0, columnspan=2, padx=8, pady=2)
+        ctk.CTkButton(left, text="🔑 Tạo khóa Bob", command=lambda: self._run_in_thread(self.__enc_gen_keys)).grid(row=2, column=0, columnspan=2, pady=15, padx=15, sticky="ew")
 
-        make_label(left, "Khóa công khai (B):").grid(row=5, column=0, columnspan=2,
-                                                      sticky="w", padx=8, pady=(6, 0))
-        self.enc_pub_txt = make_text(left, height=4, width=38)
-        self.enc_pub_txt.grid(row=6, column=0, columnspan=2, padx=8, pady=2)
+        ctk.CTkLabel(left, text="Khóa riêng (s):").grid(row=3, column=0, columnspan=2, sticky="w", padx=15)
+        self.enc_priv_txt = ctk.CTkTextbox(left, height=60, font=ctk.CTkFont("Consolas", 12))
+        self.enc_priv_txt.grid(row=4, column=0, columnspan=2, padx=15, pady=(0, 10), sticky="ew")
 
-        self.enc_keytime_var = tk.StringVar()
-        tk.Label(left, textvariable=self.enc_keytime_var, bg=PANEL,
-                 fg=FG_MUTED, font=FONT_SMALL).grid(row=7, column=0, columnspan=2, padx=8)
+        ctk.CTkLabel(left, text="Khóa công khai (B):").grid(row=5, column=0, columnspan=2, sticky="w", padx=15)
+        self.enc_pub_txt = ctk.CTkTextbox(left, height=80, font=ctk.CTkFont("Consolas", 12))
+        self.enc_pub_txt.grid(row=6, column=0, columnspan=2, padx=15, pady=(0, 10), sticky="ew")
 
-        right = tk.Frame(parent, bg=BG)
-        right.pack(side="left", fill="both", expand=True, padx=(6, 12), pady=12)
+        self.enc_keytime_var = ctk.StringVar()
+        ctk.CTkLabel(left, textvariable=self.enc_keytime_var, text_color=MUTED_TEXT, font=ctk.CTkFont(size=11)).grid(row=7, column=0, columnspan=2, padx=15, pady=5)
 
-        tk.Label(right, text="📝  Văn bản (Alice gửi):", bg=BG, fg=FG,
-                 font=FONT_BODY).pack(anchor="w", padx=4)
-        self.enc_msg_txt = make_text(right, height=4, width=65)
-        self.enc_msg_txt.pack(fill="x", padx=4, pady=(2, 8))
-        self.enc_msg_txt.insert("1.0", "hello world")
+        right = ctk.CTkFrame(parent, fg_color="transparent")
+        right.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        right.grid_columnconfigure(0, weight=1)
+        right.grid_rowconfigure(3, weight=1)
 
-        btn_frame = tk.Frame(right, bg=BG)
-        btn_frame.pack(fill="x", padx=4, pady=4)
-        btn_enc = tk.Button(btn_frame, text="🔐  Mã hóa",
-                            command=lambda: self._run_in_thread(self.__enc_encrypt))
-        style_btn(btn_enc, ACCENT)
-        btn_enc.pack(side="left", padx=6)
-        btn_dec = tk.Button(btn_frame, text="🔓  Giải mã",
-                            command=lambda: self._run_in_thread(self.__enc_decrypt))
-        style_btn(btn_dec, SUCCESS)
-        btn_dec.pack(side="left", padx=6)
+        ctk.CTkLabel(right, text="📝 Văn bản (Alice gửi):", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, sticky="w", pady=(0, 5))
+        self.enc_msg_txt = ctk.CTkTextbox(right, height=100, font=ctk.CTkFont("Consolas", 13))
+        self.enc_msg_txt.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.enc_msg_txt.insert("0.0", "hello world")
 
-        tk.Label(right, text="📤  Kết quả:", bg=BG, fg=FG,
-                 font=FONT_BODY).pack(anchor="w", padx=4, pady=(10, 2))
-        self.enc_out_txt = make_text(right, height=20, width=65)
-        self.enc_out_txt.pack(fill="both", expand=True, padx=4)
+        btn_frame = ctk.CTkFrame(right, fg_color="transparent")
+        btn_frame.grid(row=2, column=0, sticky="w", pady=(0, 10))
+        
+        ctk.CTkButton(btn_frame, text="🔐 Mã hóa", command=lambda: self._run_in_thread(self.__enc_encrypt)).pack(side="left", padx=(0, 10))
+        ctk.CTkButton(btn_frame, text="🔓 Giải mã", command=lambda: self._run_in_thread(self.__enc_decrypt), fg_color=SUCCESS_COLOR, hover_color="#059669").pack(side="left")
+
+        ctk.CTkLabel(right, text="📤 Kết quả:", font=ctk.CTkFont(weight="bold")).grid(row=3, column=0, sticky="w", pady=(10, 5))
+        self.enc_out_txt = ctk.CTkTextbox(right, font=ctk.CTkFont("Consolas", 13))
+        self.enc_out_txt.grid(row=4, column=0, sticky="nsew")
 
         self._enc_private_key     = None
         self._enc_public_key      = None
@@ -393,13 +327,13 @@ class App(tk.Tk):
         self._enc_public_key  = B
         elapsed = time.time() - t0
 
-        self.enc_priv_txt.delete("1.0", tk.END)
-        self.enc_priv_txt.insert(tk.END, str(s))
-        self.enc_pub_txt.delete("1.0", tk.END)
-        self.enc_pub_txt.insert(tk.END, f"x = {B.x}\ny = {B.y}")
+        self.enc_priv_txt.delete("0.0", "end")
+        self.enc_priv_txt.insert("end", str(s))
+        self.enc_pub_txt.delete("0.0", "end")
+        self.enc_pub_txt.insert("end", f"x = {B.x}\ny = {B.y}")
         self.enc_keytime_var.set(f"⏱ Tạo khóa: {elapsed*1000:.1f} ms")
-        self.enc_out_txt.delete("1.0", tk.END)
-        self.enc_out_txt.insert(tk.END,
+        self.enc_out_txt.delete("0.0", "end")
+        self.enc_out_txt.insert("end",
             f"✅ Đã tạo cặp khóa Bob ({self.enc_curve_var.get()}) "
             f"trong {elapsed*1000:.1f} ms\n"
         )
@@ -408,7 +342,7 @@ class App(tk.Tk):
         if self._enc_public_key is None:
             messagebox.showwarning("Chưa tạo khóa", "Vui lòng tạo khóa Bob trước!")
             return
-        msg = self.enc_msg_txt.get("1.0", tk.END).strip()
+        msg = self.enc_msg_txt.get("0.0", "end").strip()
         if not msg:
             return
         t0 = time.time()
@@ -417,8 +351,8 @@ class App(tk.Tk):
         self._enc_plaintext_point = M
         elapsed = time.time() - t0
 
-        self.enc_out_txt.delete("1.0", tk.END)
-        self.enc_out_txt.insert(tk.END,
+        self.enc_out_txt.delete("0.0", "end")
+        self.enc_out_txt.insert("end",
             f"=== Mã hóa ElGamal ===\n"
             f"Điểm M nhúng:\n  x={M.x}\n  y={M.y}\n\n"
             f"Bản mã (M1, M2):\n"
@@ -437,82 +371,68 @@ class App(tk.Tk):
 
         ok = self._enc_engine.points_equal(M_dec, self._enc_plaintext_point)
         status = "✅ Giải mã THÀNH CÔNG — điểm trùng khớp" if ok else "❌ Điểm không khớp"
-        self.enc_out_txt.insert(tk.END,
+        self.enc_out_txt.insert("end",
             f"\n=== Giải mã ===\n"
             f"Điểm M giải mã:\n  x={M_dec.x}\n  y={M_dec.y}\n\n"
             f"{status}\n"
-            f"Văn bản gốc: \"{self.enc_msg_txt.get('1.0', tk.END).strip()}\"\n"
+            f"Văn bản gốc: \"{self.enc_msg_txt.get('0.0', 'end').strip()}\"\n"
             f"⏱ Giải mã trong {elapsed*1000:.1f} ms\n"
         )
 
-    # ══════════════════════════════════════════════════
+    # ==================================================================
     # TAB 3 — AI IP Guardian
-    # ══════════════════════════════════════════════════
-
+    # ==================================================================
     def _build_tab_guardian(self, parent):
-        top = tk.Frame(parent, bg=PANEL)
-        top.pack(fill="x", padx=12, pady=(12, 6), ipady=8, ipadx=8)
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(1, weight=1)
 
-        tk.Label(top, text="🤖  AI IP Guardian", bg=PANEL, fg=ACCENT2,
-                 font=FONT_TITLE).pack(side="left", padx=12)
+        top = ctk.CTkFrame(parent, fg_color="#F1F5F9", corner_radius=10)
+        top.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
-        tk.Label(top, text="IP:", bg=PANEL, fg=FG, font=FONT_BODY).pack(side="left", padx=(20, 4))
-        self.guard_ip_var = tk.StringVar(value="192.168.1.100")
-        tk.Entry(top, textvariable=self.guard_ip_var, width=18,
-                 bg=ENTRY_BG, fg=FG, insertbackground=FG, font=FONT_MONO,
-                 relief="flat").pack(side="left")
+        # Hàng 1
+        row1 = ctk.CTkFrame(top, fg_color="transparent")
+        row1.pack(fill="x", padx=15, pady=(15, 5))
+        
+        ctk.CTkLabel(row1, text="🤖 AI IP Guardian", font=ctk.CTkFont(size=16, weight="bold"), text_color="#334155").pack(side="left", padx=(0, 20))
+        
+        ctk.CTkLabel(row1, text="IP:").pack(side="left", padx=(0, 5))
+        self.guard_ip_var = ctk.StringVar(value="192.168.1.100")
+        ctk.CTkEntry(row1, textvariable=self.guard_ip_var, width=150).pack(side="left", padx=(0, 20))
 
-        tk.Label(top, text="Message:", bg=PANEL, fg=FG, font=FONT_BODY).pack(side="left", padx=(14, 4))
-        self.guard_msg_var = tk.StringVar(value="test_signature")
-        tk.Entry(top, textvariable=self.guard_msg_var, width=20,
-                 bg=ENTRY_BG, fg=FG, insertbackground=FG, font=FONT_MONO,
-                 relief="flat").pack(side="left")
+        ctk.CTkLabel(row1, text="Message:").pack(side="left", padx=(0, 5))
+        self.guard_msg_var = ctk.StringVar(value="test_signature")
+        ctk.CTkEntry(row1, textvariable=self.guard_msg_var, width=180).pack(side="left", padx=(0, 20))
 
-        self.guard_success_var = tk.BooleanVar(value=True)
-        tk.Checkbutton(top, text="Success", variable=self.guard_success_var,
-                       bg=PANEL, fg=FG, selectcolor=PANEL, activebackground=PANEL,
-                       font=FONT_BODY).pack(side="left", padx=10)
+        self.guard_success_var = ctk.BooleanVar(value=True)
+        ctk.CTkCheckBox(row1, text="Success", variable=self.guard_success_var).pack(side="left")
 
-        btn_check = tk.Button(top, text="🔍  Kiểm tra", command=self._guard_check)
-        style_btn(btn_check, ACCENT)
-        btn_check.pack(side="left", padx=8)
+        # Hàng 2: Các nút bấm
+        row2 = ctk.CTkFrame(top, fg_color="transparent")
+        row2.pack(fill="x", padx=15, pady=(5, 15))
 
-        btn_sim = tk.Button(top, text="⚡  Mô phỏng tấn công",
-                            command=lambda: self._run_in_thread(self.__guard_simulate))
-        style_btn(btn_sim, DANGER)
-        btn_sim.pack(side="left", padx=4)
+        ctk.CTkButton(row2, text="🔍 Kiểm tra", command=self._guard_check).pack(side="left", padx=(0, 10))
+        ctk.CTkButton(row2, text="⚡ Mô phỏng tấn công", command=lambda: self._run_in_thread(self.__guard_simulate), fg_color=DANGER_COLOR, hover_color="#b91c1c").pack(side="left", padx=(0, 10))
+        ctk.CTkButton(row2, text="➕ Thêm Whitelist", command=self._guard_add_whitelist, fg_color=SUCCESS_COLOR, hover_color="#059669").pack(side="left", padx=(0, 10))
+        ctk.CTkButton(row2, text="🔄 Reset IP", command=self._guard_reset, fg_color="#64748b", hover_color="#475569").pack(side="left", padx=(0, 10))
+        ctk.CTkButton(row2, text="🚫 Xem Blocked", command=self._guard_show_blocked, fg_color="#7c2d12", hover_color="#451a03").pack(side="left")
 
-        btn_wl = tk.Button(top, text="➕  Thêm Whitelist",
-                           command=self._guard_add_whitelist)
-        style_btn(btn_wl, SUCCESS)
-        btn_wl.pack(side="left", padx=4)
+        # Khu vực Log
+        mid = ctk.CTkFrame(parent, fg_color="transparent")
+        mid.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 10))
+        mid.grid_columnconfigure(0, weight=1)
+        mid.grid_rowconfigure(1, weight=1)
 
-        btn_reset = tk.Button(top, text="🔄  Reset IP", command=self._guard_reset)
-        style_btn(btn_reset, "#475569")
-        btn_reset.pack(side="left", padx=4)
+        ctk.CTkLabel(mid, text="📋 Nhật ký sự kiện:", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, sticky="w", pady=(0, 5))
+        self.guard_log_txt = ctk.CTkTextbox(mid, font=ctk.CTkFont("Consolas", 13))
+        self.guard_log_txt.grid(row=1, column=0, sticky="nsew")
 
-        # FIX: thêm nút xem danh sách bị block
-        btn_blocked = tk.Button(top, text="🚫  Xem Blocked",
-                                command=self._guard_show_blocked)
-        style_btn(btn_blocked, "#7c2d12")
-        btn_blocked.pack(side="left", padx=4)
-
-        mid = tk.Frame(parent, bg=BG)
-        mid.pack(fill="both", expand=True, padx=12, pady=6)
-
-        tk.Label(mid, text="📋  Nhật ký sự kiện:", bg=BG, fg=FG,
-                 font=FONT_BODY).pack(anchor="w")
-        self.guard_log_txt = make_text(mid, height=22, width=100)
-        self.guard_log_txt.pack(fill="both", expand=True)
-
-        self.guard_stats_var = tk.StringVar(value="Chưa có thống kê")
-        tk.Label(parent, textvariable=self.guard_stats_var,
-                 bg=PANEL, fg=FG_MUTED, font=FONT_SMALL,
-                 anchor="w", padx=12, pady=4).pack(fill="x", padx=12)
+        # Thanh trạng thái riêng của IP Guardian
+        self.guard_stats_var = ctk.StringVar(value="Chưa có thống kê")
+        ctk.CTkLabel(parent, textvariable=self.guard_stats_var, text_color=MUTED_TEXT, font=ctk.CTkFont(size=12)).grid(row=2, column=0, sticky="w", padx=15, pady=5)
 
     def _guard_log(self, msg):
-        self.guard_log_txt.insert(tk.END, msg + "\n")
-        self.guard_log_txt.see(tk.END)
+        self.guard_log_txt.insert("end", msg + "\n")
+        self.guard_log_txt.see("end")
 
     def _guard_check(self):
         ip     = self.guard_ip_var.get().strip()
@@ -537,7 +457,6 @@ class App(tk.Tk):
         )
 
     def __guard_simulate(self):
-        """Mô phỏng tấn công brute-force từ một IP."""
         import random
         attacker = self.guard_ip_var.get().strip() or "10.0.0.99"
         self._guard_log(f"\n{'─'*60}")
@@ -568,7 +487,6 @@ class App(tk.Tk):
         self._guard_log(f"[RESET] 🔄 Đã reset thống kê và trạng thái block cho IP {ip}")
 
     def _guard_show_blocked(self):
-        """FIX: hiển thị danh sách IP đang bị block."""
         blocked = self.guardian.get_blocked_list()
         self._guard_log(f"\n{'─'*60}")
         self._guard_log(f"🚫 Danh sách IP đang bị block ({len(blocked)} IP):")
@@ -581,13 +499,10 @@ class App(tk.Tk):
                                 f"Lúc={t}  {info['reason']}")
         self._guard_log(f"{'─'*60}\n")
 
-
 # ── Entry point ───────────────────────────────────────
-
 def run():
     app = App()
     app.mainloop()
-
 
 if __name__ == "__main__":
     run()

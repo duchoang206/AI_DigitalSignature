@@ -159,3 +159,5 @@
 2026-05-08 08:42:22 [INFO] [ALLOW] 10.1.1.2 score=0.008
 2026-05-08 08:42:22 [WARNING] [BLOCK][HARD_RULE] 10.1.1.2 — Fail rate: 100%
 2026-05-08 18:10:22 [INFO] Loaded Isolation Forest model.
+2026-05-08 21:38:00 [INFO] Loaded Isolation Forest model.
+2026-05-08 21:39:52 [INFO] Loaded Isolation Forest model.
