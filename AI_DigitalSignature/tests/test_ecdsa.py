@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3/
 """Unit tests cho ECDSA, ECGDSA, EC ElGamal"""
 import sys, os, time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
