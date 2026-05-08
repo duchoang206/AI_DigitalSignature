@@ -15,7 +15,7 @@ AI_DigitalSignature/
 ├── README.md
 │
 ├── src/
-│   ├── core/                     ← Thuật toán mật mã (chuyển từ C#)
+│   ├── core/                     ← Thuật toán mật mã 
 │   │   ├── point.py              ← Phép toán điểm trên đường cong Elliptic
 │   │   ├── elliptic_curve.py     ← Wrapper EllipticCurve, kiểm tra tham số miền
 │   │   ├── utils.py              ← Miller-Rabin, SHA-512, nhúng text vào điểm
