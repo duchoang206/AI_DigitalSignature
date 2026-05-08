@@ -1,9 +1,9 @@
 # elliptic_curve.py — Wrapper đường cong Elliptic
 
-from .curves_db import get_curve, list_curves
+from .curves_db import get_curve, list_curves, list_ecdsa_curves
 from .point import Point, point_mul, point_add, mod_inverse
 from .utils import miller_rabin
-import random
+import secrets
 
 
 class EllipticCurve:
@@ -36,10 +36,6 @@ class EllipticCurve:
     def add(self, P: Point, Q: Point) -> Point:
         return point_add(P, Q, self.a, self.p)
 
-    # ── Sinh khóa ngẫu nhiên ──
-    def random_scalar(self) -> int:
-        return random.randint(1, self.n - 1)
-
     # ── Validate tham số miền ──
     def validate(self) -> bool:
         discriminant = (4 * pow(self.a, 3) + 27 * pow(self.b, 2)) % self.p
@@ -56,5 +52,9 @@ class EllipticCurve:
         return f"EllipticCurve({self.name}, {self.bits}bit)"
 
 
-def get_available_curves():
-    return list_curves()
+def get_available_curves(ecdsa_only: bool = False) -> list:
+    """
+    ecdsa_only=True  → chỉ trả về curves phù hợp ECDSA (h=1).
+    ecdsa_only=False → tất cả curves (dùng cho ElGamal).
+    """
+    return list_ecdsa_curves() if ecdsa_only else list_curves()
