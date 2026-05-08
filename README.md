@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # AI-ECDSA Digital Signature System 🔐
+=======
+# AI-ECDSA Digital Signature System 
+>>>>>>> a12458c746945314a2c7d69ed1428894e55c8920
 
 Hệ thống xác thực người dùng và chữ ký số dựa trên thuật toán ECDSA/ECGDSA, tích hợp lớp bảo vệ thông minh **AI IP Guardian** để ngăn chặn các hành vi tấn công mạng.
 
@@ -27,4 +31,8 @@ AI_DigitalSignature/
 │   ├── ai/               # Lõi AI (IP Guardian, Isolation Forest)
 │   └── ui/               # Giao diện người dùng Tkinter
 ├── models/               # Lưu trữ mô hình AI đã huấn luyện
+<<<<<<< HEAD
 └── logs/                 # Nhật ký hoạt động và log bảo mật
+=======
+└── logs/                 # Nhật ký hoạt động và log bảo mật
+>>>>>>> a12458c746945314a2c7d69ed1428894e55c8920
