@@ -7,4 +7,4 @@ Vấn đề 2 — Làm sao gửi thư mà không ai đọc trộm được?
 Tab "EC ElGamal" giải quyết. Alice mã hóa tin nhắn bằng khóa công khai của Bob, tạo ra một dãy số vô nghĩa với người ngoài. Chỉ Bob — người có khóa riêng — mới giải mã ra được nội dung gốc. Kể cả hacker chặn được gói tin cũng chịu thua.
 Vấn đề 3 — Nếu có kẻ xấu liên tục thử phá hệ thống thì sao?
 Tab "AI IP Guardian" tự động phát hiện và chặn. Nó theo dõi từng địa chỉ IP: gửi quá nhiều request, thất bại quá nhiều lần, hay hành vi bất thường → tự động chặn. AI dùng thuật toán Isolation Forest học từ 3.000 mẫu traffic để nhận ra kẻ tấn công, kể cả những kiểu tấn công tinh vi chưa từng thấy.
-Nền tảng chung của cả 3 là gì? Đường cong Elliptic — một công thức toán học đặc biệt tạo ra bài toán cực kỳ khó giải ngược. Bạn chọn đường cong càng nhiều bit (112 → 521) thì càng bảo mật, đổi lại máy tính cần thêm vài mili-giây để tính.
+Nền tảng chung của cả 3 là gì? Đường cong Elliptic — một công thức toán học đặc biệt tạo ra bài toán cực kỳ khó giải ngược. Bạn chọn đường cong càng nhiều bit (112 → 521) thì càng bảo mật, đổi lại máy tính cần thêm vài mili-giây để tính
