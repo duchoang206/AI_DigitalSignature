@@ -114,8 +114,7 @@ class App(tk.Tk):
                  fg=GRAY_MUTED, font=("Segoe UI", 8)).pack(side="left", padx=(12, 0))
         tk.Label(bar, text="0936.287.733", bg="#EEF4FB",
                  fg=MS_RED, font=("Segoe UI Semibold", 8)).pack(side="left")
-        tk.Label(bar, text="  |  Khóa luận tốt nghiệp ĐHCN — Nguyễn Duy Cao",
-                 bg="#EEF4FB", fg=GRAY_MUTED, font=("Segoe UI", 8)).pack(side="left")
+        
         for lbl in ["Trang chủ", "Giới thiệu", "Liên hệ"]:
             tk.Label(bar, text=lbl, bg="#EEF4FB", fg=MS_BLUE,
                      font=("Segoe UI", 8), cursor="hand2").pack(side="right", padx=10)
