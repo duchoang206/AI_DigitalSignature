@@ -165,3 +165,9 @@
 2026-05-09 09:20:54 [INFO] Loaded Isolation Forest model.
 2026-05-09 09:20:58 [INFO] Loaded Isolation Forest model.
 2026-05-09 09:22:57 [INFO] Loaded Isolation Forest model.
+2026-05-10 18:58:15 [INFO] Loaded Isolation Forest model.
+2026-05-10 19:05:29 [INFO] [ALLOW] 192.168.1.100 score=0.279
+2026-05-10 19:05:29 [INFO] [ALLOW] 192.168.1.100 score=0.017
+2026-05-10 19:05:29 [INFO] [ALLOW] 192.168.1.100 score=0.000
+2026-05-10 19:05:29 [INFO] [ALLOW] 192.168.1.100 score=0.000
+2026-05-10 19:05:29 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
