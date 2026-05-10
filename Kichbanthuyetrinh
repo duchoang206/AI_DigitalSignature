@@ -1,6 +1,6 @@
 
 Kịch bản thuyết trình — Báo cáo thực tập doanh nghiệp
-AI-ECDSA Digital Signature System · Nguyễn Duy Cao · ĐHCN Hà Nội 2024
+AI-ECDSA Digital Signature System · Surfacecity Việt Nam 
 ~15 phút
 6 phần chính
 1
@@ -26,6 +26,8 @@ ECGDSA: Biến thể của Đức — tính nghịch đảo khi tạo khóa thay
 EC ElGamal: Alice mã hóa tin nhắn bằng khóa công khai của Bob → chỉ Bob giải mã được. Hacker chặn gói tin cũng vô dụng.
 Lúc này mở demo app: "Em xin phép demo trực tiếp — em chọn đường cong secp256r1, tạo cặp khóa, nhập văn bản, ký và xác thực. Hội đồng có thể thấy kết quả HỢP LỆ xuất hiện sau chưa đầy 100ms."
 Demo trực tiếp tab "Chữ ký số" trên app — ký "Tôi xác nhận báo cáo này" và xác thực
+
+
 Gợi ý khi demo: Sau khi xác thực thành công, thử sửa 1 chữ trong nội dung rồi xác thực lại — kết quả KHÔNG HỢP LỆ sẽ gây ấn tượng mạnh với hội đồng.
 4
 Phần AI — Trái tim của đề tài
