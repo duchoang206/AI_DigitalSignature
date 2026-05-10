@@ -258,4 +258,4 @@ mkdir -p models
 ---
 
 ## 📚 Người hướng dẫn 
-- Senior Security SurfaceCity Việt Nam 
+- Nguyễn Duy Niên (Senior Security SurfaceCity Việt Nam)
