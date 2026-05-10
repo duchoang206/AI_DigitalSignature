@@ -257,10 +257,5 @@ mkdir -p models
 
 ---
 
-## 📚 Tài liệu tham khảo
-
-- N. Koblitz, *Elliptic Curve Cryptosystems*, 1987
-- D. Johnson, A. Menezes, S. Vanstone, *The Elliptic Curve Digital Signature Algorithm (ECDSA)*, 2001
-- SECG, *SEC 2: Recommended Elliptic Curve Domain Parameters v2.0*, 2010
-- NIST FIPS 186-4, *Digital Signature Standard (DSS)*
-- F. T. Liu Ting, Z. Zhou, *Isolation Forest*, IEEE ICDM 2008
+## 📚 Người hướng dẫn 
+- Senior Security SurfaceCity Việt Nam 
