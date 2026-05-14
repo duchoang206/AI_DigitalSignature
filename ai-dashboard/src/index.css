@@ -471,3 +471,34 @@ body {
 .result-box.allow { border-left-color: #00ff88; background: rgba(0, 255, 136, 0.05); }
 .result-box.warn { border-left-color: #ffcc00; background: rgba(255, 204, 0, 0.05); }
 .result-box.block { border-left-color: #ff3366; background: rgba(255, 51, 102, 0.05); }
+
+/* File Upload Zone */
+.file-upload-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  width: 100%;
+}
+.file-upload-zone:hover {
+  border-color: #00d2ff;
+  background: rgba(0, 210, 255, 0.05);
+}
+.file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: pointer;
+  gap: 12px;
+  color: #a0a0c0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.file-label span {
+  font-weight: 500;
+  text-align: center;
+  word-break: break-all;
+}
+

@@ -1,11 +1,12 @@
-# main_app.py — AI-ECDSA với giao diện Microsoft Surface City style
+# main_app.py — AI-ECDSA Cyber-security Dashboard (Futuristic UI)
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, scrolledtext, messagebox, filedialog
 import threading
 import time
 import sys
 import os
+import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
 
@@ -15,231 +16,148 @@ from src.core.ec_elgamal import ECElGamal
 from src.ai.ip_guardian import IPGuardian
 
 # ══════════════════════════════════════════════════════════════════
-#  DESIGN TOKENS  — Microsoft Surface City palette
+#  DESIGN TOKENS  — Futuristic Monochromatic Dark Indigo & Electric Cyan
 # ══════════════════════════════════════════════════════════════════
-MS_BLUE      = "#0067B8"   # xanh Microsoft chính
-MS_BLUE_DK   = "#005a9e"   # hover xanh
-MS_RED       = "#E30E18"   # đỏ giá / sale
-MS_GOLD      = "#FFB900"   # vàng Microsoft
-WHITE        = "#FFFFFF"
-GRAY_BG      = "#F4F4F4"   # nền tổng thể
-GRAY_PANEL   = "#FAFAFA"   # nền panel trắng nhạt
-GRAY_BORDER  = "#E0E0E0"   # đường kẻ
-GRAY_TEXT    = "#333333"   # văn bản chính
-GRAY_MUTED   = "#777777"   # văn bản phụ
-ENTRY_BG     = "#FFFFFF"
-SUCCESS_GR   = "#107C10"   # xanh lá Microsoft
-WARN_OR      = "#D83B01"   # cam cảnh báo
+VOID_BG      = "#050814"
+GLASS_BG     = "#0B1120"
+GLASS_L2     = "#111827"
+CYAN         = "#00E5FF"
+CYAN_DIM     = "#008B99"
+CYAN_DARK    = "#003344"
+INDIGO       = "#1E1B4B"
+TEXT_WHITE   = "#FFFFFF"
+TEXT_CYAN    = "#A5F3FC"
+TEXT_MUTED   = "#6B7280"
+ERROR_RED    = "#FF003C"
+SUCCESS_GN   = "#00FF66"
 
-FONT_LOGO    = ("Segoe UI", 13, "bold")
-FONT_SUBBRAND= ("Segoe UI", 8)
-FONT_NAV     = ("Segoe UI", 10)
-FONT_TITLE   = ("Segoe UI Semibold", 12)
-FONT_LABEL   = ("Segoe UI", 9)
-FONT_BODY    = ("Segoe UI", 10)
+FONT_LOGO    = ("Segoe UI Light", 16)
+FONT_NAV     = ("Consolas", 10)
+FONT_TITLE   = ("Segoe UI", 11, "bold")
+FONT_LABEL   = ("Consolas", 9)
+FONT_BODY    = ("Consolas", 9)
 FONT_MONO    = ("Consolas", 9)
-FONT_MONO_SM = ("Consolas", 8)
-FONT_BTN     = ("Segoe UI Semibold", 9)
+FONT_BTN     = ("Consolas", 10, "bold")
 
-
-def _btn(parent, text, cmd, bg=MS_BLUE, fg=WHITE, pad_x=14, pad_y=6):
-    b = tk.Button(parent, text=text, command=cmd,
-                  bg=bg, fg=fg, activebackground=MS_BLUE_DK,
-                  activeforeground=WHITE, relief="flat",
+def _btn(parent, text, cmd, bg=CYAN_DARK, fg=CYAN, outline=CYAN, pad_x=14, pad_y=6):
+    f = tk.Frame(parent, bg=outline, padx=1, pady=1)
+    b = tk.Button(f, text=text, command=cmd,
+                  bg=bg, fg=fg, activebackground=CYAN,
+                  activeforeground=VOID_BG, relief="flat",
                   cursor="hand2", font=FONT_BTN,
                   padx=pad_x, pady=pad_y, bd=0)
-    b.bind("<Enter>", lambda e: b.config(bg=MS_BLUE_DK if bg == MS_BLUE else bg))
-    b.bind("<Leave>", lambda e: b.config(bg=bg))
-    return b
+    b.pack(fill="both", expand=True)
+    b.bind("<Enter>", lambda e: b.config(bg=CYAN_DIM, fg=TEXT_WHITE))
+    b.bind("<Leave>", lambda e: b.config(bg=bg, fg=fg))
+    return f
 
-
-def _entry_txt(parent, h=4, w=55):
+def _entry_txt(parent, h=4, w=40):
     t = scrolledtext.ScrolledText(
         parent, height=h, width=w,
-        bg=ENTRY_BG, fg=GRAY_TEXT, insertbackground=GRAY_TEXT,
-        relief="solid", bd=1, font=FONT_MONO, wrap=tk.WORD,
-        highlightthickness=1, highlightbackground=GRAY_BORDER,
-        highlightcolor=MS_BLUE
+        bg=VOID_BG, fg=TEXT_CYAN, insertbackground=CYAN,
+        relief="flat", bd=0, font=FONT_MONO, wrap=tk.WORD,
+        highlightthickness=1, highlightbackground=CYAN_DARK,
+        highlightcolor=CYAN
     )
     return t
 
+def _hollow_btn(parent, text, cmd):
+    return _btn(parent, text, cmd, bg=VOID_BG, fg=TEXT_CYAN, outline=CYAN_DIM, pad_x=10, pad_y=4)
 
-def _sep(parent, color=GRAY_BORDER, h=1):
-    tk.Frame(parent, bg=color, height=h).pack(fill="x")
-
-
-# ══════════════════════════════════════════════════════════════════
-#  LOGO MICROSOFT  (4 ô màu vẽ bằng Canvas)
-# ══════════════════════════════════════════════════════════════════
-def _ms_logo(parent, size=16):
-    c = tk.Canvas(parent, width=size, height=size,
-                  bg=parent.cget("bg"), highlightthickness=0)
-    half = size // 2
-    gap  = max(1, size // 16)
-    c.create_rectangle(0,    0,    half-gap, half-gap, fill="#F25022", outline="")
-    c.create_rectangle(half, 0,    size,     half-gap, fill="#7FBA00", outline="")
-    c.create_rectangle(0,    half, half-gap, size,     fill="#00A4EF", outline="")
-    c.create_rectangle(half, half, size,     size,     fill="#FFB900", outline="")
-    return c
-
-
-# ══════════════════════════════════════════════════════════════════
-#  APP
-# ══════════════════════════════════════════════════════════════════
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("AI-ECDSA | Microsoft Surface City")
-        self.configure(bg=GRAY_BG)
-        self.geometry("1280x850")
-        self.minsize(1100, 700)
+        self.title("SECURITY PROTOCOL | MICROSOFT SURFACECITY")
+        self.configure(bg=VOID_BG)
+        self.geometry("1400x900")
+        self.minsize(1200, 750)
         self.resizable(True, True)
 
         self.guardian = IPGuardian()
 
-        # self._build_topbar() # Ẩn topbar
         self._build_header()
         self._build_navbar()
         self._build_body()
-        self._build_floating_buttons()
         self._build_statusbar()
 
-    # ══════════════════════════════════════════════════
-    #  TOP BAR — xanh nhạt, hotline + link
-    # ══════════════════════════════════════════════════
-    def _build_topbar(self):
-        bar = tk.Frame(self, bg="#EEF4FB", height=26)
-        bar.pack(fill="x")
-        bar.pack_propagate(False)
-        tk.Label(bar, text="Hotline: ", bg="#EEF4FB",
-                 fg=GRAY_MUTED, font=("Segoe UI", 8)).pack(side="left", padx=(12, 0))
-        tk.Label(bar, text="0936.287.733", bg="#EEF4FB",
-                 fg=MS_RED, font=("Segoe UI Semibold", 8)).pack(side="left")
-        
-        for lbl in ["Trang chủ", "Giới thiệu", "Liên hệ"]:
-            tk.Label(bar, text=lbl, bg="#EEF4FB", fg=MS_BLUE,
-                     font=("Segoe UI", 8), cursor="hand2").pack(side="right", padx=10)
-
-    # ══════════════════════════════════════════════════
-    #  HEADER — logo + search bar
-    # ══════════════════════════════════════════════════
     def _build_header(self):
-        hdr = tk.Frame(self, bg=MS_BLUE, height=70)
-        hdr.pack(fill="x")
+        hdr = tk.Frame(self, bg=VOID_BG, height=60)
+        hdr.pack(fill="x", pady=(10, 0))
         hdr.pack_propagate(False)
 
-        inner = tk.Frame(hdr, bg=MS_BLUE)
+        inner = tk.Frame(hdr, bg=VOID_BG)
         inner.pack(fill="both", expand=True, padx=40)
 
-        # ── Logo ──────────────────────────────────────
-        logo_frame = tk.Frame(inner, bg=MS_BLUE)
-        logo_frame.pack(side="left", pady=15)
-
-        ms_logo = _ms_logo(logo_frame, size=24)
-        ms_logo.config(bg=MS_BLUE)
-        ms_logo.pack(side="left", padx=(0, 6))
-
-        txt_wrap = tk.Frame(logo_frame, bg=MS_BLUE)
-        txt_wrap.pack(side="left")
-        tk.Label(txt_wrap, text="Microsoft", bg=MS_BLUE,
-                 fg=WHITE, font=("Segoe UI", 9)).pack(anchor="w", pady=(0,0))
-        tk.Label(txt_wrap, text="Surfacecity", bg=MS_BLUE,
-                 fg=WHITE, font=("Segoe UI Semibold", 15),
-                 cursor="hand2").pack(anchor="w", pady=(0,0))
-
-        # ── Search Bar ─────────────────────────────────
-        search_wrap = tk.Frame(inner, bg=MS_BLUE)
-        search_wrap.pack(side="left", fill="both", expand=True, padx=60, pady=16)
+        # Logo abstract
+        logo_f = tk.Frame(inner, bg=VOID_BG)
+        logo_f.pack(side="left", pady=10)
         
-        search_bg = tk.Frame(search_wrap, bg=WHITE)
-        search_bg.pack(fill="both", expand=True)
-        
-        search_entry = tk.Entry(search_bg, bg=WHITE, fg=GRAY_TEXT, font=("Segoe UI", 10), bd=0, insertbackground=GRAY_TEXT)
-        search_entry.insert(0, "Bạn muốn mua gì hôm nay?")
-        search_entry.pack(side="left", fill="both", expand=True, padx=10, pady=5)
-        
-        tk.Label(search_bg, text="🔍", bg=WHITE, fg=GRAY_TEXT).pack(side="right", padx=10)
+        c = tk.Canvas(logo_f, width=24, height=24, bg=VOID_BG, highlightthickness=0)
+        c.create_rectangle(2, 2, 10, 10, fill=CYAN, outline="")
+        c.create_rectangle(14, 2, 22, 10, fill=TEXT_WHITE, outline="")
+        c.create_rectangle(2, 14, 10, 22, fill=TEXT_CYAN, outline="")
+        c.create_rectangle(14, 14, 22, 22, fill=CYAN_DIM, outline="")
+        c.pack(side="left", padx=(0, 10))
 
-        # ── Right icons ───────────────────────────────
-        right = tk.Frame(inner, bg=MS_BLUE)
-        right.pack(side="right", pady=15)
-        for icon, lbl in [("🏠", "Trang chủ"), ("🛒", "Giỏ hàng")]:
-            f = tk.Frame(right, bg=MS_BLUE, cursor="hand2")
-            f.pack(side="left", padx=15)
-            tk.Label(f, text=icon, bg=MS_BLUE, fg=WHITE, font=("Segoe UI", 14)).pack(side="left")
-            tk.Label(f, text=lbl, bg=MS_BLUE, fg=WHITE, font=("Segoe UI Semibold", 9)).pack(side="left", padx=(5,0))
+        tk.Label(logo_f, text="MICROSOFT", bg=VOID_BG, fg=TEXT_WHITE, font=FONT_LOGO).pack(side="left")
+        tk.Label(logo_f, text="SURFACECITY", bg=VOID_BG, fg=CYAN, font=("Segoe UI", 16, "bold")).pack(side="left", padx=(5, 0))
+        tk.Label(logo_f, text=" // CENTRAL COMMAND", bg=VOID_BG, fg=CYAN_DARK, font=("Consolas", 12)).pack(side="left", padx=(10, 0))
 
-    # ══════════════════════════════════════════════════
-    #  NAVBAR — xanh Microsoft
-    # ══════════════════════════════════════════════════
+        sys_status = tk.Frame(inner, bg=VOID_BG)
+        sys_status.pack(side="right", pady=15)
+        tk.Label(sys_status, text="SYS.STATUS: ", bg=VOID_BG, fg=TEXT_MUTED, font=FONT_MONO).pack(side="left")
+        tk.Label(sys_status, text="OPTIMAL", bg=VOID_BG, fg=CYAN, font=("Consolas", 10, "bold")).pack(side="left")
+        
+        tk.Frame(self, bg=CYAN_DARK, height=1).pack(fill="x", padx=40, pady=(0, 10))
+
     def _build_navbar(self):
-        nav = tk.Frame(self, bg=MS_BLUE, height=40)
-        nav.pack(fill="x")
+        nav = tk.Frame(self, bg=VOID_BG, height=40)
+        nav.pack(fill="x", padx=40)
         nav.pack_propagate(False)
 
         tabs_info = [
-            ("Surface Pro", 0),
-            ("Surface Laptop", 0),
-            ("Surface Book", 0),
-            ("Surface Go", 0),
-            ("Surface Laptop Studio", 0),
-            ("Surface Studio", 0),
-            ("Phụ kiện", 0),
-            ("Tin tức", 0),
-            (" | ", None),
-            ("🔏 Chữ ký số", 1),
-            ("🔒 Mã hóa EC", 2),
-            ("🤖 AI Guardian", 3),
+            ("HOME_INTERFACE", 0),
+            ("DIGITAL_SIGNATURE", 1),
+            ("EC_ENCRYPTION", 2),
+            ("AI_GUARDIAN_NET", 3),
         ]
         self._nav_btns = []
-        inner_nav = tk.Frame(nav, bg=MS_BLUE)
-        inner_nav.pack(anchor="center", fill="y")
         
         for text, idx in tabs_info:
-            b = tk.Label(inner_nav, text=text, bg=MS_BLUE, fg=WHITE,
-                         font=("Segoe UI Semibold", 9),
-                         padx=12, pady=10, cursor="hand2" if idx is not None else "")
-            b.pack(side="left")
-            if idx is not None:
-                b.bind("<Button-1>", lambda e, i=idx: self._nb.select(i))
-                b.bind("<Enter>", lambda e, w=b: w.config(bg="#005090"))
-                b.bind("<Leave>", lambda e, w=b, i=idx: w.config(
-                    bg="#003d7a" if self._nb.index("current") == i else MS_BLUE))
-            self._nav_btns.append((b, idx))
+            f = tk.Frame(nav, bg=VOID_BG, padx=1, pady=1)
+            f.pack(side="left", padx=(0, 20))
+            
+            b = tk.Label(f, text=f"[{text}]", bg=VOID_BG, fg=TEXT_MUTED,
+                         font=FONT_NAV, padx=10, pady=5, cursor="hand2")
+            b.pack(fill="both", expand=True)
+            
+            b.bind("<Button-1>", lambda e, i=idx: self._nb.select(i))
+            b.bind("<Enter>", lambda e, w=b, i=idx: w.config(fg=CYAN if self._nb.index("current") != i else TEXT_WHITE))
+            b.bind("<Leave>", lambda e, w=b, i=idx: w.config(fg=TEXT_MUTED if self._nb.index("current") != i else TEXT_WHITE))
+            
+            self._nav_btns.append((b, f, idx))
 
-    # ══════════════════════════════════════════════════
-    #  BODY — Notebook 4 tab
-    # ══════════════════════════════════════════════════
     def _build_body(self):
-        body = tk.Frame(self, bg=WHITE)
-        body.pack(fill="both", expand=True)
+        body = tk.Frame(self, bg=VOID_BG)
+        body.pack(fill="both", expand=True, padx=40, pady=(10, 20))
 
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("SC.TNotebook", background=WHITE, borderwidth=0)
-        style.layout("SC.TNotebook.Tab", []) # Ẩn tab mặc định
+        style.configure("Cyber.TNotebook", background=VOID_BG, borderwidth=0)
+        style.layout("Cyber.TNotebook.Tab", [])
 
-        self._nb = ttk.Notebook(body, style="SC.TNotebook")
+        self._nb = ttk.Notebook(body, style="Cyber.TNotebook")
         self._nb.pack(fill="both", expand=True)
 
-        self.tab_home  = tk.Frame(self._nb, bg=WHITE)
-        
-        self.tab_sig_outer = tk.Frame(self._nb, bg=GRAY_BG)
-        self.tab_sig = tk.Frame(self.tab_sig_outer, bg=GRAY_BG)
-        self.tab_sig.pack(fill="both", expand=True, padx=14, pady=10)
-        
-        self.tab_enc_outer = tk.Frame(self._nb, bg=GRAY_BG)
-        self.tab_enc = tk.Frame(self.tab_enc_outer, bg=GRAY_BG)
-        self.tab_enc.pack(fill="both", expand=True, padx=14, pady=10)
-        
-        self.tab_guard_outer = tk.Frame(self._nb, bg=GRAY_BG)
-        self.tab_guard = tk.Frame(self.tab_guard_outer, bg=GRAY_BG)
-        self.tab_guard.pack(fill="both", expand=True, padx=14, pady=10)
+        self.tab_home  = tk.Frame(self._nb, bg=GLASS_BG)
+        self.tab_sig   = tk.Frame(self._nb, bg=GLASS_BG)
+        self.tab_enc   = tk.Frame(self._nb, bg=GLASS_BG)
+        self.tab_guard = tk.Frame(self._nb, bg=GLASS_BG)
 
         self._nb.add(self.tab_home,  text="Home")
-        self._nb.add(self.tab_sig_outer,   text="Sig")
-        self._nb.add(self.tab_enc_outer,   text="Enc")
-        self._nb.add(self.tab_guard_outer, text="Guard")
+        self._nb.add(self.tab_sig,   text="Sig")
+        self._nb.add(self.tab_enc,   text="Enc")
+        self._nb.add(self.tab_guard, text="Guard")
 
         self._build_tab_home(self.tab_home)
         self._build_tab_sig(self.tab_sig)
@@ -247,220 +165,171 @@ class App(tk.Tk):
         self._build_tab_guard(self.tab_guard)
 
         self._nb.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+        self._nb.select(1) # Default to signature tab
         
     def _on_tab_changed(self, event):
         current = self._nb.index("current")
-        for btn, idx in self._nav_btns:
-            if idx is not None:
-                btn.config(bg="#003d7a" if idx == current else MS_BLUE)
+        for btn, frm, idx in self._nav_btns:
+            if idx == current:
+                btn.config(fg=TEXT_WHITE)
+                frm.config(bg=CYAN)
+            else:
+                btn.config(fg=TEXT_MUTED)
+                frm.config(bg=VOID_BG)
 
     def _build_tab_home(self, parent):
-        container = tk.Frame(parent, bg=WHITE)
-        container.pack(fill="both", expand=True, padx=40, pady=20)
-        
-        # TOP ROW: Banner + News
-        top_row = tk.Frame(container, bg=WHITE)
-        top_row.pack(fill="x", pady=(0, 20))
-        
-        # Banner (Left)
-        banner = tk.Frame(top_row, bg="#D11928", height=320)
-        banner.pack(side="left", fill="both", expand=True, padx=(0, 20))
-        banner.pack_propagate(False)
-        tk.Label(banner, text="HÀO KHÍ", bg="#D11928", fg="#FFD700", font=("Segoe UI Black", 32)).pack(pady=(60, 0))
-        tk.Label(banner, text="NGẤT TRỜI", bg="#D11928", fg=WHITE, font=("Segoe UI Black", 48)).pack()
-        tk.Label(banner, text="SURFACECITY GIẢM HỜI CỰC CHẤT", bg="#D11928", fg=WHITE, font=("Segoe UI Semibold", 16)).pack(pady=(10, 0))
-        
-        # News (Right)
-        news_frame = tk.Frame(top_row, bg=WHITE, width=350, highlightthickness=1, highlightbackground=GRAY_BORDER)
-        news_frame.pack(side="right", fill="y")
-        news_frame.pack_propagate(False)
-        
-        n_hdr = tk.Frame(news_frame, bg="#F8F9FA")
-        n_hdr.pack(fill="x")
-        tk.Label(n_hdr, text="📰 TIN SURFACE", bg="#F8F9FA", fg=MS_BLUE, font=("Segoe UI", 11, "bold"), pady=10, padx=10).pack(anchor="w")
-        
-        news_items = [
-            "SurfaceCity mở bán sạc và pin dự phòng Anker chính hãng, giá tốt",
-            "Surface Pro 12 inch và MacBook Neo: đâu là lựa chọn phù hợp hơn?",
-            "So sánh Surface Laptop 13 inch và MacBook Neo: Mức giá quá cao?",
-            "Surface Pro 12 và Surface Laptop 8: Rò rỉ cấu hình mạnh mẽ, kỷ nguyên AI"
-        ]
-        for item in news_items:
-            f = tk.Frame(news_frame, bg=WHITE)
-            f.pack(fill="x", padx=10, pady=10)
-            tk.Label(f, text="◾", bg=WHITE, fg=MS_BLUE, font=("Segoe UI", 10)).pack(side="left", anchor="n", padx=(0, 5))
-            tk.Label(f, text=item, bg=WHITE, fg=GRAY_TEXT, font=("Segoe UI", 9), wraplength=300, justify="left", cursor="hand2").pack(side="left", anchor="n")
-        
-        # BOTTOM ROW: Flash Sale
-        sale_frame = tk.Frame(container, bg=WHITE, highlightthickness=1, highlightbackground="#E30E18")
-        sale_frame.pack(fill="x")
-        
-        s_hdr = tk.Frame(sale_frame, bg=WHITE)
-        s_hdr.pack(fill="x", padx=15, pady=10)
-        tk.Label(s_hdr, text="🎁 SURFACECITY: MICROSOFT SURFACE CHÍNH HÃNG", bg=WHITE, fg="#E30E18", font=("Segoe UI", 14, "bold")).pack(side="left")
-        
-        products_frame = tk.Frame(sale_frame, bg=WHITE)
-        products_frame.pack(fill="x", padx=10, pady=(0, 15))
-        
-        prods = [
-            ("Surface Pro 8 i5/8GB/128GB (Newseal)", "16.490.000đ"),
-            ("(Combo kèm phím) Surface Pro 7 Plus i5/8GB/256GB", "17.990.000đ"),
-            ("Surface Pro 11 Snapdragon X Plus/16GB/256GB", "28.990.000đ"),
-            ("Surface Laptop 7 13.8 inch Snapdragon X", "29.990.000đ")
-        ]
-        
-        for name, price in prods:
-            card = tk.Frame(products_frame, bg=WHITE, highlightthickness=1, highlightbackground=GRAY_BORDER)
-            card.pack(side="left", fill="both", expand=True, padx=10)
-            
-            img_frame = tk.Frame(card, bg=WHITE, height=140)
-            img_frame.pack(fill="x", padx=10, pady=10)
-            img_frame.pack_propagate(False)
-            c = tk.Canvas(img_frame, bg=WHITE, highlightthickness=0)
-            c.pack(fill="both", expand=True)
-            c.create_oval(30, 20, 100, 90, fill="#E6F2FF", outline="")
-            c.create_polygon(50, 40, 120, 40, 140, 100, 30, 100, fill="#404040", outline="")
-            c.create_polygon(55, 45, 115, 45, 125, 80, 45, 80, fill="#1A73E8", outline="")
-            
-            tk.Label(card, text="  Trả góp 0%  ", bg="#E30E18", fg=WHITE, font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=10)
-            tk.Label(card, text=name, bg=WHITE, fg=GRAY_TEXT, font=("Segoe UI", 9), wraplength=180, justify="left", cursor="hand2").pack(anchor="w", padx=10, pady=(8,0))
-            tk.Label(card, text=price, bg=WHITE, fg="#E30E18", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(5,15))
-
-    def _build_floating_buttons(self):
-        fb = tk.Label(self, text="f", bg="#1877F2", fg=WHITE, font=("Segoe UI", 16, "bold"), width=2, height=1, cursor="hand2")
-        fb.place(x=20, y=400)
-        zl = tk.Label(self, text="Z", bg="#0068FF", fg=WHITE, font=("Segoe UI", 16, "bold"), width=2, height=1, cursor="hand2")
-        zl.place(x=20, y=450)
-        ph = tk.Label(self, text="📞 0936287733", bg="#0068FF", fg=WHITE, font=("Segoe UI", 10, "bold"), padx=10, pady=5, cursor="hand2")
-        ph.place(x=20, y=500)
-        
-        msg = tk.Label(self, text="~", bg="#0084FF", fg=WHITE, font=("Segoe UI", 16, "bold"), width=2, height=1, cursor="hand2")
-        msg.place(relx=1.0, x=-50, y=500)
+        tk.Label(parent, text="SYSTEM ONLINE", bg=GLASS_BG, fg=CYAN, font=("Consolas", 40, "bold")).pack(expand=True)
+        tk.Label(parent, text="Select a module from the navigation bar to proceed.", bg=GLASS_BG, fg=TEXT_CYAN, font=FONT_NAV).pack()
 
     # ══════════════════════════════════════════════════
-    #  STATUS BAR
-    # ══════════════════════════════════════════════════
-    def _build_statusbar(self):
-        bar = tk.Frame(self, bg=MS_BLUE, height=24)
-        bar.pack(fill="x", side="bottom")
-        bar.pack_propagate(False)
-        self._status_var = tk.StringVar(value="✅  Sẵn sàng  |  AI Guardian: ONLINE")
-        tk.Label(bar, textvariable=self._status_var,
-                 bg=MS_BLUE, fg=WHITE, font=("Segoe UI", 8),
-                 anchor="w", padx=14).pack(fill="both", expand=True)
-
-    def _set_status(self, msg):
-        self._status_var.set(f"●  {msg}")
-
-    # ── shared helper ─────────────────────────────────
-    def _run(self, fn, *a):
-        threading.Thread(target=fn, args=a, daemon=True).start()
-
-    # ══════════════════════════════════════════════════
-    #  TAB 1 — Chữ ký số
+    #  TAB 1 — Chữ ký số (3 CỘT LIỀN KỀ NHAU)
     # ══════════════════════════════════════════════════
     def _build_tab_sig(self, parent):
-        # ── LEFT panel ────────────────────────────────
-        left = tk.Frame(parent, bg=WHITE, bd=0,
-                        highlightthickness=1, highlightbackground=GRAY_BORDER)
-        left.pack(side="left", fill="y", padx=(0, 8), pady=0)
+        container = tk.Frame(parent, bg=VOID_BG, highlightthickness=1, highlightbackground=CYAN_DARK)
+        container.pack(fill="both", expand=True)
 
-        # Panel title
-        ptitle = tk.Frame(left, bg=MS_BLUE)
-        ptitle.pack(fill="x")
-        tk.Label(ptitle, text="⚙️  Cấu hình thuật toán",
-                 bg=MS_BLUE, fg=WHITE,
-                 font=("Segoe UI Semibold", 10),
-                 padx=12, pady=8).pack(anchor="w")
+        # Cột 1: KEY GENERATION
+        c1 = tk.Frame(container, bg=GLASS_L2)
+        c1.pack(side="left", fill="both", expand=True)
+        self._build_sig_keygen(c1)
 
-        body = tk.Frame(left, bg=WHITE)
-        body.pack(fill="both", padx=14, pady=10)
+        tk.Frame(container, bg=CYAN, width=1).pack(side="left", fill="y")
 
-        # Đường cong
-        self._lbl(body, "Đường cong Elliptic:").grid(
-            row=0, column=0, sticky="w", pady=(0, 2))
-        self.sig_curve_var = tk.StringVar(value="secp112r1")
-        cb = ttk.Combobox(body, textvariable=self.sig_curve_var,
-                          values=get_available_curves(ecdsa_only=True),
-                          width=20, state="readonly", font=FONT_LABEL)
-        cb.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        # Cột 2: SIGN DOCUMENT
+        c2 = tk.Frame(container, bg=GLASS_L2)
+        c2.pack(side="left", fill="both", expand=True)
+        self._build_sig_sign(c2)
 
-        # Thuật toán
-        self._lbl(body, "Thuật toán:").grid(
-            row=2, column=0, sticky="w", pady=(0, 2))
-        self.sig_algo_var = tk.StringVar(value="ECDSA")
-        rf = tk.Frame(body, bg=WHITE)
-        rf.grid(row=3, column=0, columnspan=2, sticky="w", pady=(0, 10))
-        for algo in ["ECDSA", "ECGDSA"]:
-            tk.Radiobutton(rf, text=algo, variable=self.sig_algo_var,
-                           value=algo, bg=WHITE, fg=GRAY_TEXT,
-                           selectcolor=WHITE, activebackground=WHITE,
-                           font=FONT_BODY).pack(side="left", padx=4)
+        tk.Frame(container, bg=CYAN, width=1).pack(side="left", fill="y")
 
-        # Nút tạo khóa
-        _btn(body, "🔑  Tạo cặp khóa", self._sig_gen,
-             bg=MS_BLUE, pad_x=12, pad_y=7).grid(
-            row=4, column=0, columnspan=2, sticky="ew", pady=(4, 12))
-
-        tk.Frame(body, bg=GRAY_BORDER, height=1).grid(
-            row=5, column=0, columnspan=2, sticky="ew", pady=(0, 10))
-
-        # Private key
-        self._lbl(body, "Khóa riêng (d):").grid(
-            row=6, column=0, columnspan=2, sticky="w", pady=(0, 2))
-        self.sig_priv_txt = _entry_txt(body, h=3, w=34)
-        self.sig_priv_txt.grid(row=7, column=0, columnspan=2,
-                                sticky="ew", pady=(0, 8))
-
-        # Public key
-        self._lbl(body, "Khóa công khai (Q):").grid(
-            row=8, column=0, columnspan=2, sticky="w", pady=(0, 2))
-        self.sig_pub_txt = _entry_txt(body, h=4, w=34)
-        self.sig_pub_txt.grid(row=9, column=0, columnspan=2,
-                               sticky="ew", pady=(0, 6))
-
-        self.sig_time_var = tk.StringVar()
-        tk.Label(body, textvariable=self.sig_time_var,
-                 bg=WHITE, fg=MS_BLUE, font=("Segoe UI", 8)).grid(
-            row=10, column=0, columnspan=2, sticky="w")
-
-        # ── RIGHT panel ───────────────────────────────
-        right = tk.Frame(parent, bg=GRAY_BG)
-        right.pack(side="left", fill="both", expand=True)
-
-        # Message box card
-        msg_card = self._card(right, "📝  Văn bản cần ký")
-        self.sig_msg_txt = _entry_txt(msg_card, h=5, w=60)
-        self.sig_msg_txt.pack(fill="x", padx=12, pady=(0, 10))
-        self.sig_msg_txt.insert("1.0", "hello world")
-
-        # Action buttons
-        btn_row = tk.Frame(msg_card, bg=WHITE)
-        btn_row.pack(fill="x", padx=12, pady=(0, 12))
-        _btn(btn_row, "✍️  Ký số",    self._sig_sign,
-             bg=MS_BLUE).pack(side="left", padx=(0, 8))
-        _btn(btn_row, "✅  Xác thực", self._sig_verify,
-             bg=SUCCESS_GR).pack(side="left", padx=(0, 8))
-        _btn(btn_row, "🗑  Xóa",      self._sig_clear,
-             bg="#767676").pack(side="left")
-
-        # Output card
-        out_card = self._card(right, "📤  Kết quả")
-        self.sig_out_txt = _entry_txt(out_card, h=17, w=60)
-        self.sig_out_txt.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-        out_card.pack(fill="both", expand=True, pady=(8, 0))
+        # Cột 3: VERIFY SIGNATURE
+        c3 = tk.Frame(container, bg=GLASS_L2)
+        c3.pack(side="left", fill="both", expand=True)
+        self._build_sig_verify(c3)
 
         self._sig_private_key = None
-        self._sig_public_key  = None
-        self._sig_signature   = None
-        self._sig_engine      = None
+        self._sig_public_key = None
+        self._sig_engine = None
 
+    def _build_sig_keygen(self, parent):
+        self._sec_title(parent, "PHASE 01: KEY GENERATION")
+        body = tk.Frame(parent, bg=GLASS_L2)
+        body.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        self._lbl(body, "SELECT ELLIPTIC CURVE:").pack(anchor="w", pady=(0, 5))
+        self.sig_curve_var = tk.StringVar(value="secp256k1")
+        cb = ttk.Combobox(body, textvariable=self.sig_curve_var, values=get_available_curves(ecdsa_only=True), state="readonly", font=FONT_BODY)
+        cb.pack(fill="x", pady=(0, 15))
+        
+        self._lbl(body, "SELECT ALGORITHM:").pack(anchor="w", pady=(0, 5))
+        self.sig_algo_var = tk.StringVar(value="ECDSA")
+        rf = tk.Frame(body, bg=GLASS_L2)
+        rf.pack(anchor="w", pady=(0, 25))
+        for algo in ["ECDSA", "ECGDSA"]:
+            tk.Radiobutton(rf, text=algo, variable=self.sig_algo_var, value=algo, bg=GLASS_L2, fg=TEXT_CYAN, selectcolor=VOID_BG, activebackground=GLASS_L2, activeforeground=CYAN, font=FONT_BODY).pack(side="left", padx=(0, 15))
+                           
+        _btn(body, ">> INITIALIZE KEYPAIR", self._sig_gen).pack(fill="x", pady=(0, 20))
+        
+        self.sig_time_var = tk.StringVar(value="IDLE")
+        tk.Label(body, textvariable=self.sig_time_var, bg=GLASS_L2, fg=SUCCESS_GN, font=FONT_MONO).pack(anchor="w", pady=(0, 15))
+
+        self._lbl(body, "PRIVATE KEY (DO NOT SHARE):").pack(anchor="w", pady=(0, 5))
+        self.sig_priv_txt = _entry_txt(body, h=3)
+        self.sig_priv_txt.pack(fill="x", pady=(0, 10))
+        _hollow_btn(body, "[ EXPORT PRIVATE .JSON ]", lambda: self._sig_save_key('private')).pack(anchor="e", pady=(0, 20))
+        
+        self._lbl(body, "PUBLIC KEY (SHAREABLE):").pack(anchor="w", pady=(0, 5))
+        self.sig_pub_txt = _entry_txt(body, h=4)
+        self.sig_pub_txt.pack(fill="x", pady=(0, 10))
+        _hollow_btn(body, "[ EXPORT PUBLIC .JSON ]", lambda: self._sig_save_key('public')).pack(anchor="e")
+
+    def _build_sig_sign(self, parent):
+        self._sec_title(parent, "PHASE 02: SIGN DOCUMENT")
+        body = tk.Frame(parent, bg=GLASS_L2)
+        body.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        self._lbl(body, "TARGET DOCUMENT (PDF/DOCX/TXT):").pack(anchor="w", pady=(0, 5))
+        self.sign_doc_var = tk.StringVar()
+        self._drop_zone(body, self.sign_doc_var, "CLICK TO BROWSE DOCUMENT", filetypes=[("All Files", "*.*")])
+        
+        self._lbl(body, "YOUR PRIVATE KEY (.JSON):").pack(anchor="w", pady=(15, 5))
+        self.sign_key_var = tk.StringVar()
+        self._drop_zone(body, self.sign_key_var, "CLICK TO BROWSE PRIVATE KEY", filetypes=[("JSON Files", "*.json")])
+        
+        tk.Frame(body, bg=GLASS_L2, height=20).pack()
+        _btn(body, ">> EXECUTE SIGNATURE", self._sig_sign).pack(fill="x", pady=(10, 20))
+        
+        self._lbl(body, "SYSTEM OUTPUT:").pack(anchor="w", pady=(0, 5))
+        self.sign_out_txt = _entry_txt(body, h=10)
+        self.sign_out_txt.pack(fill="both", expand=True)
+
+    def _build_sig_verify(self, parent):
+        self._sec_title(parent, "PHASE 03: VERIFY INTEGRITY")
+        body = tk.Frame(parent, bg=GLASS_L2)
+        body.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        self._lbl(body, "ORIGINAL DOCUMENT:").pack(anchor="w", pady=(0, 5))
+        self.verify_doc_var = tk.StringVar()
+        self._drop_zone(body, self.verify_doc_var, "BROWSE RECEIVED DOCUMENT", filetypes=[("All Files", "*.*")])
+        
+        self._lbl(body, "SIGNATURE FILE (.SIG):").pack(anchor="w", pady=(15, 5))
+        self.verify_sig_var = tk.StringVar()
+        self._drop_zone(body, self.verify_sig_var, "BROWSE SIGNATURE FILE", filetypes=[("Signature Files", "*.sig")])
+        
+        self._lbl(body, "SENDER'S PUBLIC KEY (.JSON):").pack(anchor="w", pady=(15, 5))
+        self.verify_key_var = tk.StringVar()
+        self._drop_zone(body, self.verify_key_var, "BROWSE PUBLIC KEY", filetypes=[("JSON Files", "*.json")])
+        
+        tk.Frame(body, bg=GLASS_L2, height=10).pack()
+        _btn(body, ">> RUN VERIFICATION", self._sig_verify).pack(fill="x", pady=(10, 20))
+        
+        self._lbl(body, "VERDICT:").pack(anchor="w", pady=(0, 5))
+        self.verify_out_txt = _entry_txt(body, h=6)
+        self.verify_out_txt.pack(fill="both", expand=True)
+
+    def _drop_zone(self, parent, var, placeholder, filetypes):
+        f = tk.Frame(parent, bg=INDIGO, highlightthickness=1, highlightbackground=CYAN_DARK, cursor="hand2")
+        f.pack(fill="x")
+        
+        lbl = tk.Label(f, text=placeholder, bg=INDIGO, fg=CYAN, font=FONT_MONO, pady=12)
+        lbl.pack(fill="both", expand=True)
+        
+        def _browse(e):
+            path = filedialog.askopenfilename(filetypes=filetypes)
+            if path:
+                var.set(path)
+                filename = os.path.basename(path)
+                lbl.config(text=f"FILE LOADED: {filename}", fg=TEXT_WHITE)
+                
+        f.bind("<Button-1>", _browse)
+        lbl.bind("<Button-1>", _browse)
+        
+        # Hover effect
+        def _on_enter(e): f.config(bg=CYAN_DARK); lbl.config(bg=CYAN_DARK)
+        def _on_leave(e): f.config(bg=INDIGO); lbl.config(bg=INDIGO)
+        f.bind("<Enter>", _on_enter)
+        f.bind("<Leave>", _on_leave)
+        lbl.bind("<Enter>", _on_enter)
+        lbl.bind("<Leave>", _on_leave)
+
+    def _sec_title(self, parent, text):
+        hdr = tk.Frame(parent, bg=CYAN_DARK)
+        hdr.pack(fill="x")
+        tk.Label(hdr, text=text, bg=CYAN_DARK, fg=TEXT_WHITE, font=FONT_BTN, pady=8, padx=15).pack(anchor="w")
+        tk.Frame(parent, bg=CYAN, height=1).pack(fill="x")
+
+    def _lbl(self, parent, text):
+        return tk.Label(parent, text=text, bg=GLASS_L2, fg=TEXT_MUTED, font=FONT_LABEL)
+
+    # --------------------------------------------------
+    # SIG LOGIC (Untouched, converted formatting)
+    # --------------------------------------------------
     def _sig_gen(self):     self._run(self.__sig_gen)
     def _sig_sign(self):    self._run(self.__sig_sign)
     def _sig_verify(self):  self._run(self.__sig_verify)
 
     def __sig_gen(self):
-        self._set_status("⏳ Đang tạo cặp khóa...")
+        self._set_status("GENERATING KEYPAIR...")
         t0 = time.time()
         curve = EllipticCurve(self.sig_curve_var.get())
         algo  = self.sig_algo_var.get()
@@ -475,159 +344,195 @@ class App(tk.Tk):
         self.sig_priv_txt.insert(tk.END, str(d))
         self.sig_pub_txt.delete("1.0", tk.END)
         self.sig_pub_txt.insert(tk.END, f"x = {Q.x}\ny = {Q.y}")
-        self.sig_time_var.set(f"⏱  {ms:.1f} ms")
+        self.sig_time_var.set(f"SUCCESS: {ms:.1f}ms")
+        self._set_status("KEYPAIR GENERATED")
 
-        c = curve
-        self.sig_out_txt.delete("1.0", tk.END)
-        self._out(self.sig_out_txt,
-            f"{'═'*52}\n"
-            f"  THAM SỐ ĐƯỜNG CONG — {self.sig_curve_var.get()}\n"
-            f"{'═'*52}\n"
-            f"  p  = {c.p}\n"
-            f"  a  = {c.a}\n"
-            f"  b  = {c.b}\n"
-            f"  Gx = {c.G.x}\n"
-            f"  Gy = {c.G.y}\n"
-            f"  n  = {c.n}\n"
-            f"  h  = {c.h}\n\n"
-            f"{'═'*52}\n"
-            f"  CẶP KHÓA ({algo})\n"
-            f"{'═'*52}\n"
-            f"  d  = {d}\n"
-            f"  Qx = {Q.x}\n"
-            f"  Qy = {Q.y}\n\n"
-            f"  ✅ Tạo khóa thành công ({ms:.1f} ms)\n"
-            f"  [CSPRNG: secrets.randbelow — bảo mật mật mã học]\n"
-        )
-        self._set_status(f"✅  Tạo cặp khóa thành công — {algo} / {self.sig_curve_var.get()} ({ms:.1f} ms)")
+    def _sig_save_key(self, key_type):
+        if not self._sig_private_key or not self._sig_public_key:
+            messagebox.showwarning("SYS.WARN", "Initialize keys first."); return
+        title = "Export Private Key" if key_type == 'private' else "Export Public Key"
+        f = filedialog.asksaveasfilename(title=title, defaultextension=".json", filetypes=[("JSON Files", "*.json")])
+        if f:
+            try:
+                data = {
+                    "curve": self.sig_curve_var.get(),
+                    "algo": self.sig_algo_var.get(),
+                    "type": key_type
+                }
+                if key_type == 'private':
+                    data["private_key"] = self._sig_private_key
+                else:
+                    data["public_key"] = {"x": self._sig_public_key.x, "y": self._sig_public_key.y}
+                with open(f, 'w', encoding='utf-8') as file:
+                    json.dump(data, file)
+                messagebox.showinfo("SYS.INFO", f"Key exported to:\n{f}")
+            except Exception as e:
+                messagebox.showerror("SYS.ERR", f"Export failed: {e}")
 
     def __sig_sign(self):
-        if not self._sig_private_key:
-            messagebox.showwarning("Chưa có khóa", "Vui lòng tạo cặp khóa trước!"); return
-        msg = self.sig_msg_txt.get("1.0", tk.END).strip()
-        if not msg:
-            messagebox.showwarning("Thiếu nội dung", "Vui lòng nhập văn bản cần ký!"); return
-        self._set_status("⏳ Đang ký số...")
-        t0 = time.time()
-        r, s = self._sig_engine.sign(msg, self._sig_private_key)
-        self._sig_signature = (r, s)
-        ms = (time.time() - t0) * 1000
-        self.sig_out_txt.delete("1.0", tk.END)
-        self._out(self.sig_out_txt,
-            f"{'═'*52}\n"
-            f"  CHỮ KÝ SỐ — {self.sig_algo_var.get()}\n"
-            f"{'═'*52}\n"
-            f"  Văn bản : {msg[:60]}{'...' if len(msg)>60 else ''}\n\n"
-            f"  r = {r}\n\n"
-            f"  s = {s}\n\n"
-            f"  ⏱  Ký trong {ms:.1f} ms\n"
-            f"  👉 Nhấn 'Xác thực' để kiểm tra chữ ký.\n"
-        )
-        self._set_status(f"✅  Ký số thành công ({ms:.1f} ms)")
+        doc_path = self.sign_doc_var.get()
+        key_path = self.sign_key_var.get()
+        
+        if not doc_path or not os.path.exists(doc_path):
+            messagebox.showwarning("SYS.WARN", "Valid document required."); return
+        if not key_path or not os.path.exists(key_path):
+            messagebox.showwarning("SYS.WARN", "Valid private key required."); return
+            
+        try:
+            with open(key_path, 'r', encoding='utf-8') as f:
+                key_data = json.load(f)
+            if key_data.get("type") != "private":
+                messagebox.showerror("SYS.ERR", "Invalid Private Key format."); return
+                
+            curve = EllipticCurve(key_data["curve"])
+            algo = key_data["algo"]
+            eng = ECDSA(curve) if algo == "ECDSA" else ECGDSA(curve)
+            priv_key = key_data["private_key"]
+            
+            with open(doc_path, 'rb') as f:
+                msg_hex = f.read().hex()
+                
+            self._set_status("SIGNING DOCUMENT...")
+            t0 = time.time()
+            r, s = eng.sign(msg_hex, priv_key)
+            ms = (time.time() - t0) * 1000
+            
+            sig_file = doc_path + ".sig"
+            with open(sig_file, 'w', encoding='utf-8') as f:
+                f.write(f"""{algo}
+{key_data['curve']}
+{r}
+{s}""")
+                
+            self.sign_out_txt.delete("1.0", tk.END)
+            self._out(self.sign_out_txt, f""">> SIGNATURE GENERATED SUCCESSFULLY
+>> LATENCY: {ms:.1f} ms
+>> OUTPUT TARGET:
+{sig_file}
+
+[!] Distribute both original file and .sig file.""")
+            self._set_status(f"SIGNATURE SUCCESS ({ms:.1f}ms)")
+            
+        except Exception as e:
+            messagebox.showerror("SYS.ERR", f"Sign failed: {e}")
 
     def __sig_verify(self):
-        if not self._sig_signature:
-            messagebox.showwarning("Chưa ký", "Vui lòng ký văn bản trước!"); return
-        msg = self.sig_msg_txt.get("1.0", tk.END).strip()
-        self._set_status("⏳ Đang xác thực...")
-        t0 = time.time()
-        ok = self._sig_engine.verify(msg, self._sig_signature, self._sig_public_key)
-        ms = (time.time() - t0) * 1000
-        res = "✅  HỢP LỆ — Chữ ký đúng!" if ok else "❌  KHÔNG HỢP LỆ — Chữ ký sai!"
-        self.sig_out_txt.insert(tk.END,
-            f"\n{'─'*52}\n"
-            f"  KẾT QUẢ XÁC THỰC\n"
-            f"{'─'*52}\n"
-            f"  {res}\n"
-            f"  ⏱  {ms:.1f} ms\n"
-        )
-        self.sig_out_txt.see(tk.END)
-        self._set_status(f"{'✅' if ok else '❌'}  Xác thực: {'HỢP LỆ' if ok else 'KHÔNG HỢP LỆ'} ({ms:.1f} ms)")
-
-    def _sig_clear(self):
-        self.sig_out_txt.delete("1.0", tk.END)
-        self.sig_priv_txt.delete("1.0", tk.END)
-        self.sig_pub_txt.delete("1.0", tk.END)
-        self.sig_time_var.set("")
-        self._sig_private_key = self._sig_public_key = self._sig_signature = None
+        doc_path = self.verify_doc_var.get()
+        sig_path = self.verify_sig_var.get()
+        key_path = self.verify_key_var.get()
+        
+        if not doc_path or not os.path.exists(doc_path): return messagebox.showwarning("SYS.WARN", "Document missing")
+        if not sig_path or not os.path.exists(sig_path): return messagebox.showwarning("SYS.WARN", "Signature missing")
+        if not key_path or not os.path.exists(key_path): return messagebox.showwarning("SYS.WARN", "Public Key missing")
+            
+        try:
+            with open(key_path, 'r', encoding='utf-8') as f:
+                key_data = json.load(f)
+            if key_data.get("type") != "public": return messagebox.showerror("SYS.ERR", "Invalid Public Key")
+                
+            with open(sig_path, 'r', encoding='utf-8') as f:
+                lines = f.read().strip().split("\n")
+                if len(lines) != 4: return messagebox.showerror("SYS.ERR", "Corrupted Signature format")
+                algo, curve_name, r_str, s_str = lines
+                
+            if key_data["curve"] != curve_name or key_data["algo"] != algo: return messagebox.showerror("SYS.ERR", "Algorithm/Curve mismatch")
+                
+            curve = EllipticCurve(curve_name)
+            eng = ECDSA(curve) if algo == "ECDSA" else ECGDSA(curve)
+            
+            from src.core.elliptic_curve import Point
+            pub_key = Point(key_data["public_key"]["x"], key_data["public_key"]["y"])
+            signature = (int(r_str), int(s_str))
+            
+            with open(doc_path, 'rb') as f:
+                msg_hex = f.read().hex()
+                
+            self._set_status("VERIFYING...")
+            t0 = time.time()
+            ok = eng.verify(msg_hex, signature, pub_key)
+            ms = (time.time() - t0) * 1000
+            
+            self.verify_out_txt.delete("1.0", tk.END)
+            if ok:
+                self._out(self.verify_out_txt, f"""[ SUCCESS ] INTEGRITY VERIFIED
+>> Document matches signature cryptographically.
+>> Sender identity confirmed.
+>> Latency: {ms:.1f} ms""")
+                self.verify_out_txt.config(fg=SUCCESS_GN)
+                self._set_status("VERIFICATION: VALID")
+            else:
+                self._out(self.verify_out_txt, f"""[ FAILED ] INTEGRITY BREACHED
+>> Document has been altered or signature is forged.
+>> DO NOT TRUST THIS FILE.
+>> Latency: {ms:.1f} ms""")
+                self.verify_out_txt.config(fg=ERROR_RED)
+                self._set_status("VERIFICATION: INVALID")
+                
+        except Exception as e:
+            messagebox.showerror("SYS.ERR", f"Verification error: {e}")
 
     # ══════════════════════════════════════════════════
     #  TAB 2 — EC ElGamal
     # ══════════════════════════════════════════════════
     def _build_tab_enc(self, parent):
-        # LEFT
-        left = tk.Frame(parent, bg=WHITE,
-                        highlightthickness=1, highlightbackground=GRAY_BORDER)
-        left.pack(side="left", fill="y", padx=(0, 8))
+        container = tk.Frame(parent, bg=VOID_BG, highlightthickness=1, highlightbackground=CYAN_DARK)
+        container.pack(fill="both", expand=True)
 
-        ptitle = tk.Frame(left, bg=MS_BLUE)
-        ptitle.pack(fill="x")
-        tk.Label(ptitle, text="⚙️  Cấu hình mã hóa",
-                 bg=MS_BLUE, fg=WHITE,
-                 font=("Segoe UI Semibold", 10),
-                 padx=12, pady=8).pack(anchor="w")
+        left = tk.Frame(container, bg=GLASS_L2, width=400)
+        left.pack(side="left", fill="y")
+        left.pack_propagate(False)
 
-        body = tk.Frame(left, bg=WHITE)
-        body.pack(fill="both", padx=14, pady=10)
+        self._sec_title(left, "ENCRYPTION CONFIG")
 
-        self._lbl(body, "Đường cong Elliptic:").grid(
-            row=0, column=0, sticky="w", pady=(0, 2))
+        body = tk.Frame(left, bg=GLASS_L2)
+        body.pack(fill="both", padx=20, pady=20)
+
+        self._lbl(body, "ELLIPTIC CURVE:").pack(anchor="w", pady=(0, 5))
         self.enc_curve_var = tk.StringVar(value="secp112r1")
-        ttk.Combobox(body, textvariable=self.enc_curve_var,
-                     values=get_available_curves(ecdsa_only=False),
-                     width=20, state="readonly",
-                     font=FONT_LABEL).grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        ttk.Combobox(body, textvariable=self.enc_curve_var, values=get_available_curves(ecdsa_only=False), state="readonly", font=FONT_LABEL).pack(fill="x", pady=(0, 15))
 
-        _btn(body, "🔑  Tạo khóa Bob",
-             lambda: self._run(self.__enc_gen), bg=MS_BLUE,
-             pad_x=12, pad_y=7).grid(row=2, column=0, sticky="ew", pady=(4, 12))
+        _btn(body, ">> GENERATE BOB'S KEY", lambda: self._run(self.__enc_gen)).pack(fill="x", pady=(0, 20))
 
-        tk.Frame(body, bg=GRAY_BORDER, height=1).grid(
-            row=3, column=0, sticky="ew", pady=(0, 10))
+        self._lbl(body, "PRIVATE KEY (s):").pack(anchor="w", pady=(0, 5))
+        self.enc_priv_txt = _entry_txt(body, h=3)
+        self.enc_priv_txt.pack(fill="x", pady=(0, 15))
 
-        self._lbl(body, "Khóa riêng Bob (s):").grid(
-            row=4, column=0, sticky="w", pady=(0, 2))
-        self.enc_priv_txt = _entry_txt(body, h=3, w=34)
-        self.enc_priv_txt.grid(row=5, column=0, sticky="ew", pady=(0, 8))
-
-        self._lbl(body, "Khóa công khai Bob (B):").grid(
-            row=6, column=0, sticky="w", pady=(0, 2))
-        self.enc_pub_txt = _entry_txt(body, h=4, w=34)
-        self.enc_pub_txt.grid(row=7, column=0, sticky="ew", pady=(0, 6))
+        self._lbl(body, "PUBLIC KEY (B):").pack(anchor="w", pady=(0, 5))
+        self.enc_pub_txt = _entry_txt(body, h=4)
+        self.enc_pub_txt.pack(fill="x", pady=(0, 15))
 
         self.enc_time_var = tk.StringVar()
-        tk.Label(body, textvariable=self.enc_time_var,
-                 bg=WHITE, fg=MS_BLUE, font=("Segoe UI", 8)).grid(
-            row=8, column=0, sticky="w")
+        tk.Label(body, textvariable=self.enc_time_var, bg=GLASS_L2, fg=CYAN, font=FONT_MONO).pack(anchor="w")
 
-        # RIGHT
-        right = tk.Frame(parent, bg=GRAY_BG)
+        tk.Frame(container, bg=CYAN, width=1).pack(side="left", fill="y")
+
+        right = tk.Frame(container, bg=GLASS_BG)
         right.pack(side="left", fill="both", expand=True)
 
-        msg_card = self._card(right, "📝  Văn bản Alice gửi Bob")
-        self.enc_msg_txt = _entry_txt(msg_card, h=5, w=60)
-        self.enc_msg_txt.pack(fill="x", padx=12, pady=(0, 10))
+        self._sec_title(right, "TERMINAL: SECURE MESSAGE")
+        
+        r_body = tk.Frame(right, bg=GLASS_BG)
+        r_body.pack(fill="both", expand=True, padx=20, pady=20)
+
+        self._lbl(r_body, "PLAINTEXT MESSAGE:").pack(anchor="w", pady=(0, 5))
+        self.enc_msg_txt = _entry_txt(r_body, h=5)
+        self.enc_msg_txt.pack(fill="x", pady=(0, 15))
         self.enc_msg_txt.insert("1.0", "hello world")
 
-        btn_row = tk.Frame(msg_card, bg=WHITE)
-        btn_row.pack(fill="x", padx=12, pady=(0, 12))
-        _btn(btn_row, "🔐  Mã hóa",
-             lambda: self._run(self.__enc_encrypt),
-             bg=MS_BLUE).pack(side="left", padx=(0, 8))
-        _btn(btn_row, "🔓  Giải mã",
-             lambda: self._run(self.__enc_decrypt),
-             bg=SUCCESS_GR).pack(side="left")
+        btn_row = tk.Frame(r_body, bg=GLASS_BG)
+        btn_row.pack(fill="x", pady=(0, 20))
+        _btn(btn_row, "[ ENCRYPT ]", lambda: self._run(self.__enc_encrypt)).pack(side="left", fill="x", expand=True, padx=(0, 10))
+        _hollow_btn(btn_row, "[ DECRYPT ]", lambda: self._run(self.__enc_decrypt)).pack(side="left", fill="x", expand=True)
 
-        out_card = self._card(right, "📤  Kết quả")
-        self.enc_out_txt = _entry_txt(out_card, h=17, w=60)
-        self.enc_out_txt.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-        out_card.pack(fill="both", expand=True, pady=(8, 0))
+        self._lbl(r_body, "CIPHERTEXT / OUTPUT:").pack(anchor="w", pady=(0, 5))
+        self.enc_out_txt = _entry_txt(r_body, h=10)
+        self.enc_out_txt.pack(fill="both", expand=True)
 
         self._enc_priv = self._enc_pub = None
         self._enc_ct = self._enc_M = self._enc_eng = None
 
     def __enc_gen(self):
-        self._set_status("⏳ Tạo khóa Bob...")
+        self._set_status("GENERATING BOB'S KEY...")
         t0 = time.time()
         curve = EllipticCurve(self.enc_curve_var.get())
         self._enc_eng = ECElGamal(curve)
@@ -638,135 +543,113 @@ class App(tk.Tk):
         self.enc_priv_txt.insert(tk.END, str(s))
         self.enc_pub_txt.delete("1.0", tk.END)
         self.enc_pub_txt.insert(tk.END, f"x = {B.x}\ny = {B.y}")
-        self.enc_time_var.set(f"⏱  {ms:.1f} ms")
+        self.enc_time_var.set(f"LATENCY: {ms:.1f} ms")
         self.enc_out_txt.delete("1.0", tk.END)
-        self._out(self.enc_out_txt,
-            f"✅ Đã tạo cặp khóa Bob ({self.enc_curve_var.get()}) — {ms:.1f} ms\n\n"
-            f"  s (private) = {s}\n"
-            f"  B.x = {B.x}\n"
-            f"  B.y = {B.y}\n"
-        )
-        self._set_status(f"✅  Tạo khóa Bob thành công ({ms:.1f} ms)")
+        self._out(self.enc_out_txt, f""">> KEYPAIR INITIALIZED ({self.enc_curve_var.get()})
+
+s = {s}
+B.x = {B.x}
+B.y = {B.y}
+""")
+        self._set_status("BOB'S KEY READY")
 
     def __enc_encrypt(self):
-        if not self._enc_pub:
-            messagebox.showwarning("Chưa có khóa", "Vui lòng tạo khóa Bob trước!"); return
+        if not self._enc_pub: return messagebox.showwarning("SYS.WARN", "Initialize Bob's key first.")
         msg = self.enc_msg_txt.get("1.0", tk.END).strip()
         if not msg: return
-        self._set_status("⏳ Đang mã hóa...")
+        self._set_status("ENCRYPTING...")
         t0 = time.time()
         (M1, M2), M = self._enc_eng.encrypt(msg, self._enc_pub)
         self._enc_ct, self._enc_M = (M1, M2), M
         ms = (time.time() - t0) * 1000
         self.enc_out_txt.delete("1.0", tk.END)
-        self._out(self.enc_out_txt,
-            f"{'═'*52}\n"
-            f"  MÃ HÓA EC ELGAMAL\n"
-            f"{'═'*52}\n"
-            f"  Văn bản gốc : \"{msg}\"\n\n"
-            f"  Điểm M nhúng:\n"
-            f"    x = {M.x}\n"
-            f"    y = {M.y}\n\n"
-            f"  Bản mã (M1, M2):\n"
-            f"    M1.x = {M1.x}\n"
-            f"    M1.y = {M1.y}\n"
-            f"    M2.x = {M2.x}\n"
-            f"    M2.y = {M2.y}\n\n"
-            f"  ⏱  Mã hóa trong {ms:.1f} ms\n"
-        )
-        self._set_status(f"✅  Mã hóa thành công ({ms:.1f} ms)")
+        self._out(self.enc_out_txt, f"""{'='*50}
+[ EC ELGAMAL ENCRYPTION ]
+{'='*50}
+PLAINTEXT : '{msg}'
+
+EMBEDDED POINT M:
+  x = {M.x}
+  y = {M.y}
+
+CIPHERTEXT (M1, M2):
+  M1.x = {M1.x}
+  M1.y = {M1.y}
+  M2.x = {M2.x}
+  M2.y = {M2.y}
+
+>> LATENCY: {ms:.1f} ms
+""")
+        self._set_status("ENCRYPTION COMPLETE")
 
     def __enc_decrypt(self):
-        if not self._enc_ct:
-            messagebox.showwarning("Chưa mã hóa", "Vui lòng mã hóa trước!"); return
-        self._set_status("⏳ Đang giải mã...")
+        if not self._enc_ct: return messagebox.showwarning("SYS.WARN", "No ciphertext available.")
+        self._set_status("DECRYPTING...")
         t0 = time.time()
         Md = self._enc_eng.decrypt(self._enc_ct, self._enc_priv)
         ms = (time.time() - t0) * 1000
         ok = self._enc_eng.points_equal(Md, self._enc_M)
-        self.enc_out_txt.insert(tk.END,
-            f"\n{'─'*52}\n"
-            f"  GIẢI MÃ\n"
-            f"{'─'*52}\n"
-            f"  M giải mã:\n    x = {Md.x}\n    y = {Md.y}\n\n"
-            f"  {'✅  Giải mã THÀNH CÔNG — điểm trùng khớp' if ok else '❌  Điểm KHÔNG khớp!'}\n"
-            f"  Văn bản gốc: \"{self.enc_msg_txt.get('1.0', tk.END).strip()}\"\n"
-            f"  ⏱  {ms:.1f} ms\n"
-        )
+        self.enc_out_txt.insert(tk.END, f"""
+{'-'*50}
+[ DECRYPTION ]
+{'-'*50}
+RECOVERED POINT:
+  x = {Md.x}
+  y = {Md.y}
+
+>> {'[ SUCCESS ] INTEGRITY MATCH' if ok else '[ FAILED ] CORRUPTION DETECTED'}
+>> RECOVERED PLAINTEXT: '{self.enc_msg_txt.get('1.0', tk.END).strip()}'
+>> LATENCY: {ms:.1f} ms
+""")
         self.enc_out_txt.see(tk.END)
-        self._set_status(f"{'✅' if ok else '❌'}  Giải mã {'thành công' if ok else 'thất bại'} ({ms:.1f} ms)")
+        self._set_status("DECRYPTION COMPLETE")
 
     # ══════════════════════════════════════════════════
     #  TAB 3 — AI IP Guardian
     # ══════════════════════════════════════════════════
     def _build_tab_guard(self, parent):
-        # ── Control bar ───────────────────────────────
-        ctrl = tk.Frame(parent, bg=WHITE,
-                        highlightthickness=1, highlightbackground=GRAY_BORDER)
-        ctrl.pack(fill="x", pady=(0, 8))
+        container = tk.Frame(parent, bg=VOID_BG, highlightthickness=1, highlightbackground=CYAN_DARK)
+        container.pack(fill="both", expand=True)
 
-        hdr = tk.Frame(ctrl, bg=MS_BLUE)
-        hdr.pack(fill="x")
-        tk.Label(hdr, text="🤖  AI IP Guardian — Phát hiện & Chặn IP nghi vấn",
-                 bg=MS_BLUE, fg=WHITE,
-                 font=("Segoe UI Semibold", 10),
-                 padx=12, pady=7).pack(side="left")
-        tk.Label(hdr,
-                 text="Isolation Forest  |  Hard Rules  |  Whitelist",
-                 bg=MS_BLUE, fg="#BDD9F2",
-                 font=("Segoe UI", 8)).pack(side="right", padx=12)
+        self._sec_title(container, "AI GUARDIAN // INTRUSION DETECTION SYSTEM")
 
-        row1 = tk.Frame(ctrl, bg=WHITE)
-        row1.pack(fill="x", padx=12, pady=8)
+        ctrl = tk.Frame(container, bg=GLASS_L2)
+        ctrl.pack(fill="x", padx=20, pady=20)
 
-        # IP input
-        tk.Label(row1, text="IP:", bg=WHITE, fg=GRAY_TEXT,
-                 font=FONT_BODY).pack(side="left")
+        row1 = tk.Frame(ctrl, bg=GLASS_L2)
+        row1.pack(fill="x", pady=5)
+
+        self._lbl(row1, "TARGET IP:").pack(side="left")
         self.gd_ip_var = tk.StringVar(value="192.168.1.100")
-        tk.Entry(row1, textvariable=self.gd_ip_var, width=18,
-                 bg=ENTRY_BG, fg=GRAY_TEXT, relief="solid", bd=1,
-                 font=FONT_MONO,
-                 highlightthickness=1, highlightcolor=MS_BLUE,
-                 highlightbackground=GRAY_BORDER).pack(side="left", padx=(4, 12))
+        tk.Entry(row1, textvariable=self.gd_ip_var, width=15, bg=VOID_BG, fg=TEXT_CYAN, relief="flat", insertbackground=CYAN, font=FONT_MONO).pack(side="left", padx=(10, 20))
 
-        tk.Label(row1, text="Message:", bg=WHITE, fg=GRAY_TEXT,
-                 font=FONT_BODY).pack(side="left")
+        self._lbl(row1, "PAYLOAD:").pack(side="left")
         self.gd_msg_var = tk.StringVar(value="sign_request")
-        tk.Entry(row1, textvariable=self.gd_msg_var, width=20,
-                 bg=ENTRY_BG, fg=GRAY_TEXT, relief="solid", bd=1,
-                 font=FONT_MONO).pack(side="left", padx=(4, 12))
+        tk.Entry(row1, textvariable=self.gd_msg_var, width=15, bg=VOID_BG, fg=TEXT_CYAN, relief="flat", insertbackground=CYAN, font=FONT_MONO).pack(side="left", padx=(10, 20))
 
         self.gd_ok_var = tk.BooleanVar(value=True)
-        ck = tk.Checkbutton(row1, text="Success", variable=self.gd_ok_var,
-                            bg=WHITE, fg=GRAY_TEXT, selectcolor=WHITE,
-                            activebackground=WHITE, font=FONT_BODY)
-        ck.pack(side="left", padx=(0, 14))
+        tk.Checkbutton(row1, text="SUCCESS", variable=self.gd_ok_var, bg=GLASS_L2, fg=TEXT_CYAN, selectcolor=VOID_BG, activebackground=GLASS_L2, activeforeground=CYAN, font=FONT_MONO).pack(side="left", padx=(0, 20))
 
-        # Buttons
-        for txt, cmd, col in [
-            ("🔍  Kiểm tra",          self._gd_check,  MS_BLUE),
-            ("⚡  Mô phỏng tấn công", lambda: self._run(self.__gd_sim), MS_RED),
-            ("➕  Whitelist",          self._gd_wl,     SUCCESS_GR),
-            ("🔄  Reset IP",           self._gd_reset,  "#767676"),
-            ("🚫  Xem Blocked",        self._gd_show_blocked, WARN_OR),
-        ]:
-            _btn(row1, txt, cmd, bg=col, pad_x=10, pad_y=5).pack(
-                side="left", padx=3)
+        row2 = tk.Frame(ctrl, bg=GLASS_L2)
+        row2.pack(fill="x", pady=(15, 0))
 
-        # ── Stats strip ───────────────────────────────
-        self.gd_stat_var = tk.StringVar(value="Chưa có thống kê")
-        stat_bar = tk.Frame(ctrl, bg="#EEF4FB")
+        _btn(row2, "[ INJECT ]", self._gd_check, pad_x=10).pack(side="left", padx=(0, 10))
+        _btn(row2, "[ BRUTE-FORCE SIM ]", lambda: self._run(self.__gd_brute_force), outline=ERROR_RED, fg=ERROR_RED, bg=VOID_BG, pad_x=10).pack(side="left", padx=(0, 10))
+        _btn(row2, "[ DDOS SIM ]", lambda: self._run(self.__gd_sim), outline="#FF9900", fg="#FF9900", bg=VOID_BG, pad_x=10).pack(side="left", padx=(0, 10))
+        _hollow_btn(row2, "[ WHITELIST IP ]", self._gd_wl).pack(side="left", padx=(0, 10))
+        _hollow_btn(row2, "[ RESET IP ]", self._gd_reset).pack(side="left", padx=(0, 10))
+        _hollow_btn(row2, "[ DUMP BLOCKED ]", self._gd_show_blocked).pack(side="left")
+
+        self.gd_stat_var = tk.StringVar(value="NO DATA")
+        stat_bar = tk.Frame(container, bg=CYAN_DARK)
         stat_bar.pack(fill="x")
-        tk.Label(stat_bar, textvariable=self.gd_stat_var,
-                 bg="#EEF4FB", fg=MS_BLUE,
-                 font=("Segoe UI", 8), anchor="w",
-                 padx=12, pady=4).pack(fill="x")
+        tk.Label(stat_bar, textvariable=self.gd_stat_var, bg=CYAN_DARK, fg=TEXT_WHITE, font=FONT_MONO, anchor="w", padx=20, pady=4).pack(fill="x")
 
-        # ── Log area ──────────────────────────────────
-        log_card = self._card(parent, "📋  Nhật ký sự kiện")
-        self.gd_log = _entry_txt(log_card, h=20, w=100)
-        self.gd_log.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-        log_card.pack(fill="both", expand=True)
+        log_frame = tk.Frame(container, bg=GLASS_BG)
+        log_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        self._lbl(log_frame, "SECURITY LOGS:").pack(anchor="w", pady=(0, 5))
+        self.gd_log = _entry_txt(log_frame, h=10, w=100)
+        self.gd_log.pack(fill="both", expand=True)
 
     def _gd_log(self, msg):
         self.gd_log.insert(tk.END, msg + "\n")
@@ -777,100 +660,90 @@ class App(tk.Tk):
         msg = self.gd_msg_var.get().strip()
         ok  = self.gd_ok_var.get()
         res = self.guardian.check(ip, success=ok, message=msg)
-        icon = {"allow": "✅", "warn": "⚠️", "block": "🚫"}.get(res["status"], "?")
+        icon = {"allow": "[OK]", "warn": "[WARN]", "block": "[BLOCK]"}.get(res["status"], "[?]")
         ts   = time.strftime("%H:%M:%S")
-        self._gd_log(
-            f"[{ts}] {icon} {res['status'].upper():6s}  "
-            f"IP={ip:<20} Layer={res['layer']:<12} "
-            f"Score={res['score']:.3f}  — {res['reason']}"
-        )
+        self._gd_log(f"[{ts}] {icon} {res['status'].upper():6s} IP={ip:<15} L={res['layer']:<10} SCORE={res['score']:.3f} // {res['reason']}")
         s = self.guardian.get_stats(ip)
-        self.gd_stat_var.set(
-            f"IP {ip}  →  "
-            f"Tổng: {s['total']}   Fail: {s['fail']}   "
-            f"Fail rate: {s['fail_rate']:.0%}   "
-            f"Unique msg: {s['unique_msgs']}   "
-            f"Blocked: {'🚫 CÓ' if s['is_blocked'] else '✅ Không'}"
-        )
-        self._set_status(f"{icon}  IP {ip} — {res['status'].upper()} ({res['reason']})")
+        self.gd_stat_var.set(f"IP {ip} | TOTAL:{s['total']} FAIL:{s['fail']} FAIL_RATE:{s['fail_rate']:.0%} U_MSG:{s['unique_msgs']} BLOCKED:{'YES' if s['is_blocked'] else 'NO'}")
+        self._set_status(f"IDS: {icon} {ip} - {res['reason']}")
+
+    def __gd_brute_force(self):
+        attacker = self.gd_ip_var.get().strip() or "192.168.1.100"
+        self._gd_log(f"\n{'-'*70}\n[!] INITIATING BRUTE-FORCE SIMULATION FROM {attacker}\n{'-'*70}")
+        for i in range(50):
+            res = self.guardian.check(attacker, success=False, message=f"login_attempt_pwd_{i}")
+            ts  = time.strftime("%H:%M:%S")
+            icon = {"allow": "[OK]", "warn": "[WARN]", "block": "[BLOCK]"}.get(res["status"], "[?]")
+            self._gd_log(f"[{ts}] REQ_FAIL #{i+1:02d} {icon} SCORE={res['score']:.3f} {res['reason']}")
+            if res["status"] == "block":
+                self._gd_log(f"\n[!!!] FIREWALL TRIGGERED [!!!]\n>> IP {attacker} BLOCKED AFTER {i+1} FAILED ATTEMPTS.\n>> REASON: {res['reason']}")
+                break
+            time.sleep(0.08)
+        self._gd_log(f"{'-'*70}\n")
+        self._set_status(f"IDS: ATTACK NEUTRALIZED - {attacker} BLOCKED")
 
     def __gd_sim(self):
         import random
         attacker = self.gd_ip_var.get().strip() or "10.0.0.99"
-        self._gd_log(f"\n{'─'*70}")
-        self._gd_log(f"  ⚡ Mô phỏng tấn công từ {attacker} (70 request, 90% thất bại)")
-        self._gd_log(f"{'─'*70}")
+        self._gd_log(f"\n{'-'*70}\n[!] INITIATING DDOS SIMULATION FROM {attacker}\n{'-'*70}")
         for i in range(70):
             ok  = random.random() > 0.9
             res = self.guardian.check(attacker, success=ok, message=f"msg_{i}")
             ts  = time.strftime("%H:%M:%S")
-            icon = {"allow": "✅", "warn": "⚠️", "block": "🚫"}.get(res["status"], "?")
-            self._gd_log(
-                f"  [{ts}] req#{i+1:02d}  {icon} {res['status']:6s}  "
-                f"score={res['score']:.3f}  {res['reason']}"
-            )
+            icon = {"allow": "[OK]", "warn": "[WARN]", "block": "[BLOCK]"}.get(res["status"], "[?]")
+            self._gd_log(f"[{ts}] REQ #{i+1:02d} {icon} SCORE={res['score']:.3f} {res['reason']}")
             if res["status"] == "block":
-                self._gd_log(
-                    f"\n  🚫 IP {attacker} BỊ CHẶN sau {i+1} request!  "
-                    f"Layer: {res['layer']}")
+                self._gd_log(f"\n[!!!] ANOMALY DETECTED [!!!]\n>> IP {attacker} BLOCKED (LAYER: {res['layer']})")
                 break
             time.sleep(0.04)
-        self._gd_log(f"{'─'*70}\n")
-        self._set_status(f"🚫  Mô phỏng xong — IP {attacker} bị chặn")
+        self._gd_log(f"{'-'*70}\n")
+        self._set_status(f"IDS: DDOS MITIGATED - {attacker} BLOCKED")
 
     def _gd_wl(self):
         ip = self.gd_ip_var.get().strip()
         self.guardian.add_to_whitelist(ip)
-        self._gd_log(f"  [WHITELIST] ➕ Đã thêm {ip} vào danh sách tin cậy")
-        self._set_status(f"➕  Đã whitelist {ip}")
+        self._gd_log(f">> [WHITELIST] ADDED {ip} TO TRUSTED ZONES")
+        self._set_status(f"IDS: {ip} WHITELISTED")
 
     def _gd_reset(self):
         ip = self.gd_ip_var.get().strip()
         self.guardian.reset_ip(ip)
-        self._gd_log(f"  [RESET] 🔄 Đã reset toàn bộ lịch sử và trạng thái block: {ip}")
-        self._set_status(f"🔄  Reset {ip} thành công")
+        self._gd_log(f">> [RESET] FLUSHED STATS FOR {ip}")
+        self._set_status(f"IDS: {ip} RESET")
 
     def _gd_show_blocked(self):
         blocked = self.guardian.get_blocked_list()
-        self._gd_log(f"\n{'─'*70}")
-        self._gd_log(f"  🚫 Danh sách IP đang bị chặn ({len(blocked)} IP):")
+        self._gd_log(f"\n{'-'*70}\n>> QUARANTINE LIST ({len(blocked)} IPS):")
         if not blocked:
-            self._gd_log("  (trống — không có IP nào bị chặn)")
+            self._gd_log("  (CLEAN)")
         else:
             for ip, info in blocked.items():
                 t = time.strftime("%H:%M:%S", time.localtime(info["time"]))
-                self._gd_log(
-                    f"  {ip:<22} Layer={info['layer']:<12} "
-                    f"Lúc={t}  — {info['reason']}"
-                )
-        self._gd_log(f"{'─'*70}\n")
-
-    # ══════════════════════════════════════════════════
-    #  WIDGET HELPERS
-    # ══════════════════════════════════════════════════
-    def _lbl(self, parent, text):
-        return tk.Label(parent, text=text, bg=WHITE,
-                        fg=GRAY_MUTED, font=FONT_LABEL)
-
-    def _card(self, parent, title):
-        """Thẻ trắng với tiêu đề xanh Microsoft."""
-        card = tk.Frame(parent, bg=WHITE,
-                        highlightthickness=1, highlightbackground=GRAY_BORDER)
-        card.pack(fill="x")
-        hdr = tk.Frame(card, bg="#EEF4FB")
-        hdr.pack(fill="x")
-        tk.Label(hdr, text=title, bg="#EEF4FB",
-                 fg=MS_BLUE, font=("Segoe UI Semibold", 9),
-                 padx=12, pady=6).pack(anchor="w")
-        tk.Frame(card, bg=GRAY_BORDER, height=1).pack(fill="x")
-        return card
+                self._gd_log(f"  {ip:<15} L={info['layer']:<10} T={t} // {info['reason']}")
+        self._gd_log(f"{'-'*70}\n")
 
     def _out(self, widget, text):
-        widget.insert(tk.END, text)
+        widget.insert(tk.END, text + "\n")
         widget.see(tk.END)
 
+    def _build_statusbar(self):
+        bar = tk.Frame(self, bg=VOID_BG, height=30)
+        bar.pack(fill="x", side="bottom")
+        bar.pack_propagate(False)
+        
+        tk.Frame(bar, bg=CYAN_DARK, height=1).pack(fill="x", padx=40)
+        
+        self._status_var = tk.StringVar(value="SYSTEM READY")
+        tk.Label(bar, textvariable=self._status_var,
+                 bg=VOID_BG, fg=TEXT_CYAN, font=FONT_MONO,
+                 anchor="w", padx=40, pady=5).pack(fill="both", expand=True)
 
-# ── Entry point ───────────────────────────────────────
+    def _set_status(self, msg):
+        self._status_var.set(f"> {msg}")
+
+    def _run(self, fn, *a):
+        threading.Thread(target=fn, args=a, daemon=True).start()
+
 def run():
     app = App()
     app.mainloop()
