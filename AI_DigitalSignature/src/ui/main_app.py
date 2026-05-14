@@ -91,16 +91,17 @@ class App(tk.Tk):
         super().__init__()
         self.title("AI-ECDSA | Microsoft Surface City")
         self.configure(bg=GRAY_BG)
-        self.geometry("1180x800")
-        self.minsize(1000, 680)
+        self.geometry("1280x850")
+        self.minsize(1100, 700)
         self.resizable(True, True)
 
         self.guardian = IPGuardian()
 
-        self._build_topbar()
+        # self._build_topbar() # Ẩn topbar
         self._build_header()
         self._build_navbar()
         self._build_body()
+        self._build_floating_buttons()
         self._build_statusbar()
 
     # ══════════════════════════════════════════════════
@@ -123,106 +124,218 @@ class App(tk.Tk):
     #  HEADER — logo + search bar
     # ══════════════════════════════════════════════════
     def _build_header(self):
-        hdr = tk.Frame(self, bg=WHITE, height=60)
+        hdr = tk.Frame(self, bg=MS_BLUE, height=70)
         hdr.pack(fill="x")
         hdr.pack_propagate(False)
-        tk.Frame(hdr, bg=GRAY_BORDER, height=1).pack(side="bottom", fill="x")
 
-        inner = tk.Frame(hdr, bg=WHITE)
-        inner.pack(fill="both", expand=True, padx=16)
+        inner = tk.Frame(hdr, bg=MS_BLUE)
+        inner.pack(fill="both", expand=True, padx=40)
 
         # ── Logo ──────────────────────────────────────
-        logo_frame = tk.Frame(inner, bg=WHITE)
-        logo_frame.pack(side="left", pady=10)
+        logo_frame = tk.Frame(inner, bg=MS_BLUE)
+        logo_frame.pack(side="left", pady=15)
 
-        ms_logo = _ms_logo(logo_frame, size=22)
+        ms_logo = _ms_logo(logo_frame, size=24)
+        ms_logo.config(bg=MS_BLUE)
         ms_logo.pack(side="left", padx=(0, 6))
 
-        txt_wrap = tk.Frame(logo_frame, bg=WHITE)
+        txt_wrap = tk.Frame(logo_frame, bg=MS_BLUE)
         txt_wrap.pack(side="left")
-        tk.Label(txt_wrap, text="Microsoft", bg=WHITE,
-                 fg="#666", font=("Segoe UI", 8)).pack(anchor="w")
-        tk.Label(txt_wrap, text="Surfacecity", bg=WHITE,
-                 fg=MS_BLUE, font=("Segoe UI Semibold", 14),
-                 cursor="hand2").pack(anchor="w")
+        tk.Label(txt_wrap, text="Microsoft", bg=MS_BLUE,
+                 fg=WHITE, font=("Segoe UI", 9)).pack(anchor="w", pady=(0,0))
+        tk.Label(txt_wrap, text="Surfacecity", bg=MS_BLUE,
+                 fg=WHITE, font=("Segoe UI Semibold", 15),
+                 cursor="hand2").pack(anchor="w", pady=(0,0))
 
-        tk.Frame(inner, bg=GRAY_BORDER, width=1).pack(
-            side="left", fill="y", padx=16, pady=10)
-
-        # ── Sub-title ─────────────────────────────────
-        tk.Label(inner, text="🔐  AI-ECDSA Digital Signature System",
-                 bg=WHITE, fg=GRAY_TEXT,
-                 font=("Segoe UI Semibold", 11)).pack(side="left")
+        # ── Search Bar ─────────────────────────────────
+        search_wrap = tk.Frame(inner, bg=MS_BLUE)
+        search_wrap.pack(side="left", fill="both", expand=True, padx=60, pady=16)
+        
+        search_bg = tk.Frame(search_wrap, bg=WHITE)
+        search_bg.pack(fill="both", expand=True)
+        
+        search_entry = tk.Entry(search_bg, bg=WHITE, fg=GRAY_TEXT, font=("Segoe UI", 10), bd=0, insertbackground=GRAY_TEXT)
+        search_entry.insert(0, "Bạn muốn mua gì hôm nay?")
+        search_entry.pack(side="left", fill="both", expand=True, padx=10, pady=5)
+        
+        tk.Label(search_bg, text="🔍", bg=WHITE, fg=GRAY_TEXT).pack(side="right", padx=10)
 
         # ── Right icons ───────────────────────────────
-        right = tk.Frame(inner, bg=WHITE)
-        right.pack(side="right")
-        for icon, lbl in [("🏠", "Trang chủ"), ("🛒", "Giỏ hàng"), ("👤", "Tài khoản")]:
-            f = tk.Frame(right, bg=WHITE, cursor="hand2")
-            f.pack(side="left", padx=8)
-            tk.Label(f, text=icon, bg=WHITE, font=("Segoe UI", 16)).pack()
-            tk.Label(f, text=lbl, bg=WHITE, fg=GRAY_MUTED,
-                     font=("Segoe UI", 8)).pack()
+        right = tk.Frame(inner, bg=MS_BLUE)
+        right.pack(side="right", pady=15)
+        for icon, lbl in [("🏠", "Trang chủ"), ("🛒", "Giỏ hàng")]:
+            f = tk.Frame(right, bg=MS_BLUE, cursor="hand2")
+            f.pack(side="left", padx=15)
+            tk.Label(f, text=icon, bg=MS_BLUE, fg=WHITE, font=("Segoe UI", 14)).pack(side="left")
+            tk.Label(f, text=lbl, bg=MS_BLUE, fg=WHITE, font=("Segoe UI Semibold", 9)).pack(side="left", padx=(5,0))
 
     # ══════════════════════════════════════════════════
     #  NAVBAR — xanh Microsoft
     # ══════════════════════════════════════════════════
     def _build_navbar(self):
-        nav = tk.Frame(self, bg=MS_BLUE, height=38)
+        nav = tk.Frame(self, bg=MS_BLUE, height=40)
         nav.pack(fill="x")
         nav.pack_propagate(False)
 
         tabs_info = [
-            ("🔏  Chữ ký số", 0),
-            ("🔒  EC ElGamal", 1),
-            ("🤖  AI IP Guardian", 2),
-            ("📊  Kết quả", None),
-            ("ℹ️  Hướng dẫn", None),
+            ("Surface Pro", 0),
+            ("Surface Laptop", 0),
+            ("Surface Book", 0),
+            ("Surface Go", 0),
+            ("Surface Laptop Studio", 0),
+            ("Surface Studio", 0),
+            ("Phụ kiện", 0),
+            ("Tin tức", 0),
+            (" | ", None),
+            ("🔏 Chữ ký số", 1),
+            ("🔒 Mã hóa EC", 2),
+            ("🤖 AI Guardian", 3),
         ]
         self._nav_btns = []
+        inner_nav = tk.Frame(nav, bg=MS_BLUE)
+        inner_nav.pack(anchor="center", fill="y")
+        
         for text, idx in tabs_info:
-            b = tk.Label(nav, text=text, bg=MS_BLUE, fg=WHITE,
+            b = tk.Label(inner_nav, text=text, bg=MS_BLUE, fg=WHITE,
                          font=("Segoe UI Semibold", 9),
-                         padx=16, pady=10, cursor="hand2")
+                         padx=12, pady=10, cursor="hand2" if idx is not None else "")
             b.pack(side="left")
             if idx is not None:
                 b.bind("<Button-1>", lambda e, i=idx: self._nb.select(i))
-            b.bind("<Enter>", lambda e, w=b: w.config(bg="#005090"))
-            b.bind("<Leave>", lambda e, w=b, i=idx: w.config(
-                bg="#003d7a" if i is not None and self._nb.index("current") == i else MS_BLUE))
+                b.bind("<Enter>", lambda e, w=b: w.config(bg="#005090"))
+                b.bind("<Leave>", lambda e, w=b, i=idx: w.config(
+                    bg="#003d7a" if self._nb.index("current") == i else MS_BLUE))
             self._nav_btns.append((b, idx))
 
     # ══════════════════════════════════════════════════
-    #  BODY — Notebook 3 tab
+    #  BODY — Notebook 4 tab
     # ══════════════════════════════════════════════════
     def _build_body(self):
-        body = tk.Frame(self, bg=GRAY_BG)
-        body.pack(fill="both", expand=True, padx=14, pady=10)
+        body = tk.Frame(self, bg=WHITE)
+        body.pack(fill="both", expand=True)
 
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("SC.TNotebook", background=GRAY_BG, borderwidth=0)
-        style.configure("SC.TNotebook.Tab",
-                        background="#E8F0FB", foreground=GRAY_TEXT,
-                        font=("Segoe UI Semibold", 9), padding=[16, 6])
-        style.map("SC.TNotebook.Tab",
-                  background=[("selected", MS_BLUE), ("active", "#C5D9F0")],
-                  foreground=[("selected", WHITE),   ("active", MS_BLUE)])
+        style.configure("SC.TNotebook", background=WHITE, borderwidth=0)
+        style.layout("SC.TNotebook.Tab", []) # Ẩn tab mặc định
 
         self._nb = ttk.Notebook(body, style="SC.TNotebook")
         self._nb.pack(fill="both", expand=True)
 
-        self.tab_sig   = tk.Frame(self._nb, bg=GRAY_BG)
-        self.tab_enc   = tk.Frame(self._nb, bg=GRAY_BG)
-        self.tab_guard = tk.Frame(self._nb, bg=GRAY_BG)
+        self.tab_home  = tk.Frame(self._nb, bg=WHITE)
+        
+        self.tab_sig_outer = tk.Frame(self._nb, bg=GRAY_BG)
+        self.tab_sig = tk.Frame(self.tab_sig_outer, bg=GRAY_BG)
+        self.tab_sig.pack(fill="both", expand=True, padx=14, pady=10)
+        
+        self.tab_enc_outer = tk.Frame(self._nb, bg=GRAY_BG)
+        self.tab_enc = tk.Frame(self.tab_enc_outer, bg=GRAY_BG)
+        self.tab_enc.pack(fill="both", expand=True, padx=14, pady=10)
+        
+        self.tab_guard_outer = tk.Frame(self._nb, bg=GRAY_BG)
+        self.tab_guard = tk.Frame(self.tab_guard_outer, bg=GRAY_BG)
+        self.tab_guard.pack(fill="both", expand=True, padx=14, pady=10)
 
-        self._nb.add(self.tab_sig,   text="🔏  Chữ ký số (ECDSA / ECGDSA)")
-        self._nb.add(self.tab_enc,   text="🔒  Mã hóa EC ElGamal")
-        self._nb.add(self.tab_guard, text="🤖  AI IP Guardian")
+        self._nb.add(self.tab_home,  text="Home")
+        self._nb.add(self.tab_sig_outer,   text="Sig")
+        self._nb.add(self.tab_enc_outer,   text="Enc")
+        self._nb.add(self.tab_guard_outer, text="Guard")
 
+        self._build_tab_home(self.tab_home)
         self._build_tab_sig(self.tab_sig)
         self._build_tab_enc(self.tab_enc)
         self._build_tab_guard(self.tab_guard)
+
+        self._nb.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+        
+    def _on_tab_changed(self, event):
+        current = self._nb.index("current")
+        for btn, idx in self._nav_btns:
+            if idx is not None:
+                btn.config(bg="#003d7a" if idx == current else MS_BLUE)
+
+    def _build_tab_home(self, parent):
+        container = tk.Frame(parent, bg=WHITE)
+        container.pack(fill="both", expand=True, padx=40, pady=20)
+        
+        # TOP ROW: Banner + News
+        top_row = tk.Frame(container, bg=WHITE)
+        top_row.pack(fill="x", pady=(0, 20))
+        
+        # Banner (Left)
+        banner = tk.Frame(top_row, bg="#D11928", height=320)
+        banner.pack(side="left", fill="both", expand=True, padx=(0, 20))
+        banner.pack_propagate(False)
+        tk.Label(banner, text="HÀO KHÍ", bg="#D11928", fg="#FFD700", font=("Segoe UI Black", 32)).pack(pady=(60, 0))
+        tk.Label(banner, text="NGẤT TRỜI", bg="#D11928", fg=WHITE, font=("Segoe UI Black", 48)).pack()
+        tk.Label(banner, text="SURFACECITY GIẢM HỜI CỰC CHẤT", bg="#D11928", fg=WHITE, font=("Segoe UI Semibold", 16)).pack(pady=(10, 0))
+        
+        # News (Right)
+        news_frame = tk.Frame(top_row, bg=WHITE, width=350, highlightthickness=1, highlightbackground=GRAY_BORDER)
+        news_frame.pack(side="right", fill="y")
+        news_frame.pack_propagate(False)
+        
+        n_hdr = tk.Frame(news_frame, bg="#F8F9FA")
+        n_hdr.pack(fill="x")
+        tk.Label(n_hdr, text="📰 TIN SURFACE", bg="#F8F9FA", fg=MS_BLUE, font=("Segoe UI", 11, "bold"), pady=10, padx=10).pack(anchor="w")
+        
+        news_items = [
+            "SurfaceCity mở bán sạc và pin dự phòng Anker chính hãng, giá tốt",
+            "Surface Pro 12 inch và MacBook Neo: đâu là lựa chọn phù hợp hơn?",
+            "So sánh Surface Laptop 13 inch và MacBook Neo: Mức giá quá cao?",
+            "Surface Pro 12 và Surface Laptop 8: Rò rỉ cấu hình mạnh mẽ, kỷ nguyên AI"
+        ]
+        for item in news_items:
+            f = tk.Frame(news_frame, bg=WHITE)
+            f.pack(fill="x", padx=10, pady=10)
+            tk.Label(f, text="◾", bg=WHITE, fg=MS_BLUE, font=("Segoe UI", 10)).pack(side="left", anchor="n", padx=(0, 5))
+            tk.Label(f, text=item, bg=WHITE, fg=GRAY_TEXT, font=("Segoe UI", 9), wraplength=300, justify="left", cursor="hand2").pack(side="left", anchor="n")
+        
+        # BOTTOM ROW: Flash Sale
+        sale_frame = tk.Frame(container, bg=WHITE, highlightthickness=1, highlightbackground="#E30E18")
+        sale_frame.pack(fill="x")
+        
+        s_hdr = tk.Frame(sale_frame, bg=WHITE)
+        s_hdr.pack(fill="x", padx=15, pady=10)
+        tk.Label(s_hdr, text="🎁 SURFACECITY: MICROSOFT SURFACE CHÍNH HÃNG", bg=WHITE, fg="#E30E18", font=("Segoe UI", 14, "bold")).pack(side="left")
+        
+        products_frame = tk.Frame(sale_frame, bg=WHITE)
+        products_frame.pack(fill="x", padx=10, pady=(0, 15))
+        
+        prods = [
+            ("Surface Pro 8 i5/8GB/128GB (Newseal)", "16.490.000đ"),
+            ("(Combo kèm phím) Surface Pro 7 Plus i5/8GB/256GB", "17.990.000đ"),
+            ("Surface Pro 11 Snapdragon X Plus/16GB/256GB", "28.990.000đ"),
+            ("Surface Laptop 7 13.8 inch Snapdragon X", "29.990.000đ")
+        ]
+        
+        for name, price in prods:
+            card = tk.Frame(products_frame, bg=WHITE, highlightthickness=1, highlightbackground=GRAY_BORDER)
+            card.pack(side="left", fill="both", expand=True, padx=10)
+            
+            img_frame = tk.Frame(card, bg=WHITE, height=140)
+            img_frame.pack(fill="x", padx=10, pady=10)
+            img_frame.pack_propagate(False)
+            c = tk.Canvas(img_frame, bg=WHITE, highlightthickness=0)
+            c.pack(fill="both", expand=True)
+            c.create_oval(30, 20, 100, 90, fill="#E6F2FF", outline="")
+            c.create_polygon(50, 40, 120, 40, 140, 100, 30, 100, fill="#404040", outline="")
+            c.create_polygon(55, 45, 115, 45, 125, 80, 45, 80, fill="#1A73E8", outline="")
+            
+            tk.Label(card, text="  Trả góp 0%  ", bg="#E30E18", fg=WHITE, font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=10)
+            tk.Label(card, text=name, bg=WHITE, fg=GRAY_TEXT, font=("Segoe UI", 9), wraplength=180, justify="left", cursor="hand2").pack(anchor="w", padx=10, pady=(8,0))
+            tk.Label(card, text=price, bg=WHITE, fg="#E30E18", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(5,15))
+
+    def _build_floating_buttons(self):
+        fb = tk.Label(self, text="f", bg="#1877F2", fg=WHITE, font=("Segoe UI", 16, "bold"), width=2, height=1, cursor="hand2")
+        fb.place(x=20, y=400)
+        zl = tk.Label(self, text="Z", bg="#0068FF", fg=WHITE, font=("Segoe UI", 16, "bold"), width=2, height=1, cursor="hand2")
+        zl.place(x=20, y=450)
+        ph = tk.Label(self, text="📞 0936287733", bg="#0068FF", fg=WHITE, font=("Segoe UI", 10, "bold"), padx=10, pady=5, cursor="hand2")
+        ph.place(x=20, y=500)
+        
+        msg = tk.Label(self, text="~", bg="#0084FF", fg=WHITE, font=("Segoe UI", 16, "bold"), width=2, height=1, cursor="hand2")
+        msg.place(relx=1.0, x=-50, y=500)
 
     # ══════════════════════════════════════════════════
     #  STATUS BAR
