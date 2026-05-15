@@ -13,7 +13,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
 from src.core.elliptic_curve import EllipticCurve, get_available_curves
 from src.core.ecdsa import ECDSA, ECGDSA
 from src.core.ec_elgamal import ECElGamal
-from src.ai.ip_guardian import IPGuardian
+from src.ai.face_auth import BiometricAuth
+from src.ai.chatbot import SecurityBot
 
 # ══════════════════════════════════════════════════════════════════
 #  DESIGN TOKENS  — Futuristic Monochromatic Dark Indigo & Electric Cyan
@@ -69,11 +70,14 @@ class App(tk.Tk):
         super().__init__()
         self.title("SECURITY PROTOCOL | MICROSOFT SURFACECITY")
         self.configure(bg=VOID_BG)
-        self.geometry("1400x900")
-        self.minsize(1200, 750)
+        self.geometry("1500x900")
+        self.minsize(1300, 750)
         self.resizable(True, True)
 
-        self.guardian = IPGuardian()
+        self.face_net = BiometricAuth(os.path.join(os.path.dirname(__file__), "../../data/owner_face.jpg"))
+        self.chatbot = SecurityBot()
+        self._temp_priv_key = None
+        self._sig_key_meta = None
 
         self._build_header()
         self._build_navbar()
@@ -119,7 +123,6 @@ class App(tk.Tk):
             ("HOME_INTERFACE", 0),
             ("DIGITAL_SIGNATURE", 1),
             ("EC_ENCRYPTION", 2),
-            ("AI_GUARDIAN_NET", 3),
         ]
         self._nav_btns = []
         
@@ -140,29 +143,34 @@ class App(tk.Tk):
     def _build_body(self):
         body = tk.Frame(self, bg=VOID_BG)
         body.pack(fill="both", expand=True, padx=40, pady=(10, 20))
+        
+        left_panel = tk.Frame(body, bg=VOID_BG)
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 20))
+        
+        right_panel = tk.Frame(body, bg=GLASS_L2, width=350, highlightthickness=1, highlightbackground=CYAN_DARK)
+        right_panel.pack(side="right", fill="y")
+        right_panel.pack_propagate(False)
+        self._build_chatbot(right_panel)
 
         style = ttk.Style()
         style.theme_use("clam")
         style.configure("Cyber.TNotebook", background=VOID_BG, borderwidth=0)
         style.layout("Cyber.TNotebook.Tab", [])
 
-        self._nb = ttk.Notebook(body, style="Cyber.TNotebook")
+        self._nb = ttk.Notebook(left_panel, style="Cyber.TNotebook")
         self._nb.pack(fill="both", expand=True)
 
         self.tab_home  = tk.Frame(self._nb, bg=GLASS_BG)
         self.tab_sig   = tk.Frame(self._nb, bg=GLASS_BG)
         self.tab_enc   = tk.Frame(self._nb, bg=GLASS_BG)
-        self.tab_guard = tk.Frame(self._nb, bg=GLASS_BG)
 
         self._nb.add(self.tab_home,  text="Home")
         self._nb.add(self.tab_sig,   text="Sig")
         self._nb.add(self.tab_enc,   text="Enc")
-        self._nb.add(self.tab_guard, text="Guard")
 
         self._build_tab_home(self.tab_home)
         self._build_tab_sig(self.tab_sig)
         self._build_tab_enc(self.tab_enc)
-        self._build_tab_guard(self.tab_guard)
 
         self._nb.bind("<<NotebookTabChanged>>", self._on_tab_changed)
         self._nb.select(1) # Default to signature tab
@@ -250,11 +258,11 @@ class App(tk.Tk):
         
         self._lbl(body, "TARGET DOCUMENT (PDF/DOCX/TXT):").pack(anchor="w", pady=(0, 5))
         self.sign_doc_var = tk.StringVar()
-        self._drop_zone(body, self.sign_doc_var, "CLICK TO BROWSE DOCUMENT", filetypes=[("All Files", "*.*")])
+        self.sign_doc_label = self._drop_zone(body, self.sign_doc_var, "CLICK TO BROWSE DOCUMENT", filetypes=[("All Files", "*.*")])
         
         self._lbl(body, "YOUR PRIVATE KEY (.JSON):").pack(anchor="w", pady=(15, 5))
         self.sign_key_var = tk.StringVar()
-        self._drop_zone(body, self.sign_key_var, "CLICK TO BROWSE PRIVATE KEY", filetypes=[("JSON Files", "*.json")])
+        self.sign_key_label = self._drop_zone(body, self.sign_key_var, "CLICK TO BROWSE PRIVATE KEY", filetypes=[("JSON Files", "*.json")])
         
         tk.Frame(body, bg=GLASS_L2, height=20).pack()
         _btn(body, ">> EXECUTE SIGNATURE", self._sig_sign).pack(fill="x", pady=(10, 20))
@@ -311,6 +319,7 @@ class App(tk.Tk):
         f.bind("<Leave>", _on_leave)
         lbl.bind("<Enter>", _on_enter)
         lbl.bind("<Leave>", _on_leave)
+        return lbl
 
     def _sec_title(self, parent, text):
         hdr = tk.Frame(parent, bg=CYAN_DARK)
@@ -338,6 +347,7 @@ class App(tk.Tk):
         d, Q  = eng.generate_keypair()
         self._sig_private_key = d
         self._sig_public_key  = Q
+        self._sig_key_meta = {"curve": self.sig_curve_var.get(), "algo": self.sig_algo_var.get()}
         ms = (time.time() - t0) * 1000
 
         self.sig_priv_txt.delete("1.0", tk.END)
@@ -375,35 +385,63 @@ class App(tk.Tk):
         
         if not doc_path or not os.path.exists(doc_path):
             messagebox.showwarning("SYS.WARN", "Valid document required."); return
-        if not key_path or not os.path.exists(key_path):
-            messagebox.showwarning("SYS.WARN", "Valid private key required."); return
-            
+        
+        temp_priv_key = None
+        temp_meta = None
+        key_data = None
+        file_private_used = False
+
+        if key_path and os.path.exists(key_path):
+            try:
+                with open(key_path, 'r', encoding='utf-8') as f:
+                    key_data = json.load(f)
+                if key_data.get("type") != "private":
+                    messagebox.showerror("SYS.ERR", "Invalid Private Key format."); return
+                temp_priv_key = key_data["private_key"]
+                temp_meta = {"curve": key_data["curve"], "algo": key_data["algo"]}
+                file_private_used = True
+            except Exception as e:
+                messagebox.showerror("SYS.ERR", f"Unable to load private key: {e}"); return
+        elif self._sig_private_key is not None and self._sig_key_meta is not None:
+            temp_priv_key = self._sig_private_key
+            temp_meta = self._sig_key_meta
+        else:
+            messagebox.showwarning("SYS.WARN", "Private key required. Vui lòng tạo khóa hoặc tải private key lên."); return
+
+        curve = EllipticCurve(temp_meta["curve"])
+        algo = temp_meta["algo"]
+        eng = ECDSA(curve) if algo == "ECDSA" else ECGDSA(curve)
+
+        self._set_status("AWAITING BIOMETRIC AUTH...")
+        self._append_chat("System", "Đang kích hoạt module FaceNet. Vui lòng nhìn thẳng vào camera.")
+        is_owner = self.face_net.verify_owner()
+
+        if not is_owner:
+            self._append_chat("System", "CẢNH BÁO: Khuôn mặt không khớp hoặc đã hủy. Khóa bị đóng băng.")
+            self._set_status("AUTH FAILED")
+            messagebox.showerror("SECURITY ALERT", "Xác thực khuôn mặt thất bại!")
+            temp_priv_key = None
+            if key_data is not None: del key_data
+            return
+
+        self._append_chat("System", "Xác thực khuôn mặt thành công. Khóa Private Key được giải mã trong bộ nhớ tạm và tiến hành ký...")
+
         try:
-            with open(key_path, 'r', encoding='utf-8') as f:
-                key_data = json.load(f)
-            if key_data.get("type") != "private":
-                messagebox.showerror("SYS.ERR", "Invalid Private Key format."); return
-                
-            curve = EllipticCurve(key_data["curve"])
-            algo = key_data["algo"]
-            eng = ECDSA(curve) if algo == "ECDSA" else ECGDSA(curve)
-            priv_key = key_data["private_key"]
-            
             with open(doc_path, 'rb') as f:
                 msg_hex = f.read().hex()
-                
+
             self._set_status("SIGNING DOCUMENT...")
             t0 = time.time()
-            r, s = eng.sign(msg_hex, priv_key)
+            r, s = eng.sign(msg_hex, temp_priv_key)
             ms = (time.time() - t0) * 1000
-            
+
             sig_file = doc_path + ".sig"
             with open(sig_file, 'w', encoding='utf-8') as f:
                 f.write(f"""{algo}
-{key_data['curve']}
+{curve.name}
 {r}
 {s}""")
-                
+
             self.sign_out_txt.delete("1.0", tk.END)
             self._out(self.sign_out_txt, f""">> SIGNATURE GENERATED SUCCESSFULLY
 >> LATENCY: {ms:.1f} ms
@@ -412,9 +450,21 @@ class App(tk.Tk):
 
 [!] Distribute both original file and .sig file.""")
             self._set_status(f"SIGNATURE SUCCESS ({ms:.1f}ms)")
-            
+
+            # Clear temporary private key from memory
+            temp_priv_key = None
+            if key_data is not None:
+                del key_data
+            if file_private_used:
+                self.sign_key_var.set("")
+                if hasattr(self, 'sign_key_label'):
+                    self.sign_key_label.config(text="CLICK TO BROWSE PRIVATE KEY", fg=CYAN)
+
         except Exception as e:
             messagebox.showerror("SYS.ERR", f"Sign failed: {e}")
+            temp_priv_key = None
+            if key_data is not None:
+                del key_data
 
     def __sig_verify(self):
         doc_path = self.verify_doc_var.get()
@@ -604,127 +654,80 @@ RECOVERED POINT:
         self.enc_out_txt.see(tk.END)
         self._set_status("DECRYPTION COMPLETE")
 
-    # ══════════════════════════════════════════════════
-    #  TAB 3 — AI IP Guardian
-    # ══════════════════════════════════════════════════
-    def _build_tab_guard(self, parent):
-        container = tk.Frame(parent, bg=VOID_BG, highlightthickness=1, highlightbackground=CYAN_DARK)
-        container.pack(fill="both", expand=True)
+    def _build_chatbot(self, parent):
+        self._sec_title(parent, "AI COPILOT")
+        chat_body = tk.Frame(parent, bg=GLASS_L2)
+        chat_body.pack(fill="both", expand=True, padx=15, pady=15)
+        
+        self.chat_history = scrolledtext.ScrolledText(
+            chat_body, bg=VOID_BG, fg=TEXT_CYAN, insertbackground=CYAN,
+            relief="flat", bd=0, font=FONT_BODY, wrap=tk.WORD,
+            highlightthickness=1, highlightbackground=CYAN_DARK,
+            highlightcolor=CYAN
+        )
+        self.chat_history.pack(fill="both", expand=True, pady=(0, 15))
+        self.chat_history.config(state=tk.DISABLED)
+        
+        self.chat_entry = tk.Entry(
+            chat_body, bg=VOID_BG, fg=TEXT_WHITE, insertbackground=CYAN,
+            relief="flat", font=FONT_BODY, highlightthickness=1, 
+            highlightbackground=CYAN_DARK, highlightcolor=CYAN
+        )
+        self.chat_entry.pack(fill="x", ipady=8, pady=(0, 10))
+        self.chat_entry.bind("<Return>", self._handle_chat)
+        
+        _btn(chat_body, "SEND COMMAND", self._handle_chat).pack(fill="x")
+        
+        self._append_chat(self.chatbot.bot_name, "Chào bạn, hệ thống chữ ký số đã sẵn sàng. Bạn muốn ký tài liệu hay xác thực file hôm nay?")
 
-        self._sec_title(container, "AI GUARDIAN // INTRUSION DETECTION SYSTEM")
-
-        ctrl = tk.Frame(container, bg=GLASS_L2)
-        ctrl.pack(fill="x", padx=20, pady=20)
-
-        row1 = tk.Frame(ctrl, bg=GLASS_L2)
-        row1.pack(fill="x", pady=5)
-
-        self._lbl(row1, "TARGET IP:").pack(side="left")
-        self.gd_ip_var = tk.StringVar(value="192.168.1.100")
-        tk.Entry(row1, textvariable=self.gd_ip_var, width=15, bg=VOID_BG, fg=TEXT_CYAN, relief="flat", insertbackground=CYAN, font=FONT_MONO).pack(side="left", padx=(10, 20))
-
-        self._lbl(row1, "PAYLOAD:").pack(side="left")
-        self.gd_msg_var = tk.StringVar(value="sign_request")
-        tk.Entry(row1, textvariable=self.gd_msg_var, width=15, bg=VOID_BG, fg=TEXT_CYAN, relief="flat", insertbackground=CYAN, font=FONT_MONO).pack(side="left", padx=(10, 20))
-
-        self.gd_ok_var = tk.BooleanVar(value=True)
-        tk.Checkbutton(row1, text="SUCCESS", variable=self.gd_ok_var, bg=GLASS_L2, fg=TEXT_CYAN, selectcolor=VOID_BG, activebackground=GLASS_L2, activeforeground=CYAN, font=FONT_MONO).pack(side="left", padx=(0, 20))
-
-        row2 = tk.Frame(ctrl, bg=GLASS_L2)
-        row2.pack(fill="x", pady=(15, 0))
-
-        _btn(row2, "[ INJECT ]", self._gd_check, pad_x=10).pack(side="left", padx=(0, 10))
-        _btn(row2, "[ BRUTE-FORCE SIM ]", lambda: self._run(self.__gd_brute_force), outline=ERROR_RED, fg=ERROR_RED, bg=VOID_BG, pad_x=10).pack(side="left", padx=(0, 10))
-        _btn(row2, "[ DDOS SIM ]", lambda: self._run(self.__gd_sim), outline="#FF9900", fg="#FF9900", bg=VOID_BG, pad_x=10).pack(side="left", padx=(0, 10))
-        _hollow_btn(row2, "[ WHITELIST IP ]", self._gd_wl).pack(side="left", padx=(0, 10))
-        _hollow_btn(row2, "[ RESET IP ]", self._gd_reset).pack(side="left", padx=(0, 10))
-        _hollow_btn(row2, "[ DUMP BLOCKED ]", self._gd_show_blocked).pack(side="left")
-
-        self.gd_stat_var = tk.StringVar(value="NO DATA")
-        stat_bar = tk.Frame(container, bg=CYAN_DARK)
-        stat_bar.pack(fill="x")
-        tk.Label(stat_bar, textvariable=self.gd_stat_var, bg=CYAN_DARK, fg=TEXT_WHITE, font=FONT_MONO, anchor="w", padx=20, pady=4).pack(fill="x")
-
-        log_frame = tk.Frame(container, bg=GLASS_BG)
-        log_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        self._lbl(log_frame, "SECURITY LOGS:").pack(anchor="w", pady=(0, 5))
-        self.gd_log = _entry_txt(log_frame, h=10, w=100)
-        self.gd_log.pack(fill="both", expand=True)
-
-    def _gd_log(self, msg):
-        self.gd_log.insert(tk.END, msg + "\n")
-        self.gd_log.see(tk.END)
-
-    def _gd_check(self):
-        ip  = self.gd_ip_var.get().strip()
-        msg = self.gd_msg_var.get().strip()
-        ok  = self.gd_ok_var.get()
-        res = self.guardian.check(ip, success=ok, message=msg)
-        icon = {"allow": "[OK]", "warn": "[WARN]", "block": "[BLOCK]"}.get(res["status"], "[?]")
-        ts   = time.strftime("%H:%M:%S")
-        self._gd_log(f"[{ts}] {icon} {res['status'].upper():6s} IP={ip:<15} L={res['layer']:<10} SCORE={res['score']:.3f} // {res['reason']}")
-        s = self.guardian.get_stats(ip)
-        self.gd_stat_var.set(f"IP {ip} | TOTAL:{s['total']} FAIL:{s['fail']} FAIL_RATE:{s['fail_rate']:.0%} U_MSG:{s['unique_msgs']} BLOCKED:{'YES' if s['is_blocked'] else 'NO'}")
-        self._set_status(f"IDS: {icon} {ip} - {res['reason']}")
-
-    def __gd_brute_force(self):
-        attacker = self.gd_ip_var.get().strip() or "192.168.1.100"
-        self._gd_log(f"\n{'-'*70}\n[!] INITIATING BRUTE-FORCE SIMULATION FROM {attacker}\n{'-'*70}")
-        for i in range(50):
-            res = self.guardian.check(attacker, success=False, message=f"login_attempt_pwd_{i}")
-            ts  = time.strftime("%H:%M:%S")
-            icon = {"allow": "[OK]", "warn": "[WARN]", "block": "[BLOCK]"}.get(res["status"], "[?]")
-            self._gd_log(f"[{ts}] REQ_FAIL #{i+1:02d} {icon} SCORE={res['score']:.3f} {res['reason']}")
-            if res["status"] == "block":
-                self._gd_log(f"\n[!!!] FIREWALL TRIGGERED [!!!]\n>> IP {attacker} BLOCKED AFTER {i+1} FAILED ATTEMPTS.\n>> REASON: {res['reason']}")
-                break
-            time.sleep(0.08)
-        self._gd_log(f"{'-'*70}\n")
-        self._set_status(f"IDS: ATTACK NEUTRALIZED - {attacker} BLOCKED")
-
-    def __gd_sim(self):
-        import random
-        attacker = self.gd_ip_var.get().strip() or "10.0.0.99"
-        self._gd_log(f"\n{'-'*70}\n[!] INITIATING DDOS SIMULATION FROM {attacker}\n{'-'*70}")
-        for i in range(70):
-            ok  = random.random() > 0.9
-            res = self.guardian.check(attacker, success=ok, message=f"msg_{i}")
-            ts  = time.strftime("%H:%M:%S")
-            icon = {"allow": "[OK]", "warn": "[WARN]", "block": "[BLOCK]"}.get(res["status"], "[?]")
-            self._gd_log(f"[{ts}] REQ #{i+1:02d} {icon} SCORE={res['score']:.3f} {res['reason']}")
-            if res["status"] == "block":
-                self._gd_log(f"\n[!!!] ANOMALY DETECTED [!!!]\n>> IP {attacker} BLOCKED (LAYER: {res['layer']})")
-                break
-            time.sleep(0.04)
-        self._gd_log(f"{'-'*70}\n")
-        self._set_status(f"IDS: DDOS MITIGATED - {attacker} BLOCKED")
-
-    def _gd_wl(self):
-        ip = self.gd_ip_var.get().strip()
-        self.guardian.add_to_whitelist(ip)
-        self._gd_log(f">> [WHITELIST] ADDED {ip} TO TRUSTED ZONES")
-        self._set_status(f"IDS: {ip} WHITELISTED")
-
-    def _gd_reset(self):
-        ip = self.gd_ip_var.get().strip()
-        self.guardian.reset_ip(ip)
-        self._gd_log(f">> [RESET] FLUSHED STATS FOR {ip}")
-        self._set_status(f"IDS: {ip} RESET")
-
-    def _gd_show_blocked(self):
-        blocked = self.guardian.get_blocked_list()
-        self._gd_log(f"\n{'-'*70}\n>> QUARANTINE LIST ({len(blocked)} IPS):")
-        if not blocked:
-            self._gd_log("  (CLEAN)")
+    def _append_chat(self, sender, message):
+        self.chat_history.config(state=tk.NORMAL)
+        if sender == "You":
+            self.chat_history.insert(tk.END, f"[{sender}]\n{message}\n\n", "user")
+            self.chat_history.tag_config("user", foreground=TEXT_WHITE)
         else:
-            for ip, info in blocked.items():
-                t = time.strftime("%H:%M:%S", time.localtime(info["time"]))
-                self._gd_log(f"  {ip:<15} L={info['layer']:<10} T={t} // {info['reason']}")
-        self._gd_log(f"{'-'*70}\n")
+            self.chat_history.insert(tk.END, f"[{sender}]\n{message}\n\n", "bot")
+            self.chat_history.tag_config("bot", foreground=CYAN)
+        self.chat_history.see(tk.END)
+        self.chat_history.config(state=tk.DISABLED)
+
+    def _handle_chat(self, event=None):
+        msg = self.chat_entry.get().strip()
+        if not msg: return
+        self.chat_entry.delete(0, tk.END)
+        self._append_chat("You", msg)
+        
+        cmd, response = self.chatbot.process_command(msg)
+        self._append_chat(self.chatbot.bot_name, response)
+        
+        if cmd in ("command_sign", "command_open_sign_doc"):
+            self._nb.select(1) # Select Signature tab
+            if self._browse_sign_document():
+                self._run(self.__sig_sign)
+            else:
+                self._append_chat("System", "Hủy thao tác mở file ký. Nếu bạn muốn tiếp tục, hãy gõ lại lệnh ký file.")
+        elif cmd == "command_verify":
+            self._nb.select(1) # Select Signature tab
+        elif cmd == "command_keygen":
+            self._nb.select(1) # Select Signature tab
+        elif cmd == "command_clear":
+            self.chat_history.config(state=tk.NORMAL)
+            self.chat_history.delete("1.0", tk.END)
+            self.chat_history.config(state=tk.DISABLED)
 
     def _out(self, widget, text):
         widget.insert(tk.END, text + "\n")
         widget.see(tk.END)
+
+    def _browse_sign_document(self):
+        path = filedialog.askopenfilename(title="Select document to sign", filetypes=[("All Files", "*.*")])
+        if not path:
+            return False
+        self.sign_doc_var.set(path)
+        if hasattr(self, 'sign_doc_label'):
+            self.sign_doc_label.config(text=f"FILE LOADED: {os.path.basename(path)}", fg=TEXT_WHITE)
+        self._append_chat("System", f"File đã chọn: {os.path.basename(path)}")
+        return True
 
     def _build_statusbar(self):
         bar = tk.Frame(self, bg=VOID_BG, height=30)

@@ -12,12 +12,18 @@ from src.core.ecdsa import ECDSA, ECGDSA
 from src.core.ec_elgamal import ECElGamal
 from src.core.point import Point
 from src.ai.ip_guardian import IPGuardian
+from src.ai.face_auth import BiometricAuth
+from src.ai.chatbot import SecurityBot
 
 app = Flask(__name__)
 CORS(app)
 
 # Global instances (simplified for demo purposes)
 guardian = IPGuardian()
+bot = SecurityBot()
+# Initialize BiometricAuth with owner face
+owner_face_path = os.path.join(os.path.dirname(__file__), "data", "owner_face.jpg")
+biometric = BiometricAuth(owner_face_path)
 
 @app.route('/api/sig/keys', methods=['POST'])
 def sig_keys():
@@ -106,6 +112,57 @@ def guard_check():
         "result": res,
         "stats": stats
     })
+
+@app.route('/api/chatbot/command', methods=['POST'])
+def chatbot_command():
+    data = request.json or {}
+    user_input = data.get('text', '')
+    cmd, response = bot.process_command(user_input)
+    return jsonify({
+        "success": True,
+        "command": cmd,
+        "response": response
+    })
+
+@app.route('/api/facenet/verify', methods=['POST'])
+def facenet_verify():
+    # In a real scenario, this would trigger the camera on the server side
+    # or process a frames sent from client. For this local app demo,
+    # we trigger the OpenCV window on the server machine.
+    success = biometric.verify_owner()
+    return jsonify({
+        "success": True,
+        "verified": success
+    })
+
+@app.route('/api/sig/stealth-sign', methods=['POST'])
+def stealth_sign():
+    data = request.json or {}
+    msg = data.get('message', '')
+    curve_name = data.get('curve', 'secp256k1')
+    
+    # Simulate: Retrieve encrypted private key from "secure storage"
+    # and decrypt it into RAM (local variable)
+    # In a real app, this would be retrieved from a DB or secure enclave
+    dummy_private_key = 12345678901234567890 # Placeholder for demo
+    
+    t0 = time.time()
+    try:
+        curve = EllipticCurve(curve_name)
+        eng = ECDSA(curve)
+        r, s = eng.sign(msg, dummy_private_key)
+        
+        # Explicitly "clear" from RAM
+        del dummy_private_key
+        
+        ms = (time.time() - t0) * 1000
+        return jsonify({
+            "success": True,
+            "signature": {"r": str(r), "s": str(s)},
+            "time_ms": round(ms, 1)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 if __name__ == '__main__':
     print("Starting AI-ECDSA API Server on http://localhost:5000")

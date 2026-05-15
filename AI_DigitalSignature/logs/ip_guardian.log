@@ -2553,3 +2553,80 @@
 2026-05-14 22:29:26 [INFO]  * Detected change in 'C:\\Users\\hhoan\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python311\\site-packages\\flask_cors\\extension.py', reloading
 2026-05-14 22:29:26 [INFO] 127.0.0.1 - - [14/May/2026 22:29:26] "[35m[1mPOST /api/sig/verify HTTP/1.1[0m" 500 -
 2026-05-14 22:29:27 [INFO]  * Restarting with watchdog (windowsapi)
+2026-05-14 22:29:27 [INFO]  * Restarting with watchdog (windowsapi)
+2026-05-14 22:29:27 [INFO]  * Restarting with watchdog (windowsapi)
+2026-05-14 22:29:30 [INFO] Loaded Isolation Forest model.
+2026-05-14 22:29:30 [WARNING]  * Debugger is active!
+2026-05-14 22:29:30 [INFO]  * Debugger PIN: 101-239-268
+2026-05-14 22:29:30 [INFO] Loaded Isolation Forest model.
+2026-05-14 22:29:30 [WARNING]  * Debugger is active!
+2026-05-14 22:29:30 [INFO] Loaded Isolation Forest model.
+2026-05-14 22:29:30 [INFO]  * Debugger PIN: 101-239-268
+2026-05-14 22:29:30 [WARNING]  * Debugger is active!
+2026-05-14 22:29:30 [INFO]  * Debugger PIN: 101-239-268
+2026-05-14 22:29:31 [INFO] 127.0.0.1 - - [14/May/2026 22:29:31] "[35m[1mPOST /api/sig/verify HTTP/1.1[0m" 500 -
+2026-05-14 22:29:31 [INFO] 127.0.0.1 - - [14/May/2026 22:29:31] "[35m[1mPOST /api/sig/verify HTTP/1.1[0m" 500 -
+2026-05-14 22:30:32 [INFO] 127.0.0.1 - - [14/May/2026 22:30:32] "OPTIONS /api/sig/verify HTTP/1.1" 200 -
+2026-05-14 22:30:32 [INFO] 127.0.0.1 - - [14/May/2026 22:30:32] "[35m[1mPOST /api/sig/verify HTTP/1.1[0m" 500 -
+2026-05-14 22:30:59 [INFO] 127.0.0.1 - - [14/May/2026 22:30:59] "OPTIONS /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:30:59 [INFO] [ALLOW] 192.168.1.100 score=0.319
+2026-05-14 22:30:59 [INFO] 127.0.0.1 - - [14/May/2026 22:30:59] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:30:59 [INFO] [ALLOW] 192.168.1.100 score=0.145
+2026-05-14 22:30:59 [INFO] 127.0.0.1 - - [14/May/2026 22:30:59] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:30:59 [INFO] [ALLOW] 192.168.1.100 score=0.127
+2026-05-14 22:30:59 [INFO] 127.0.0.1 - - [14/May/2026 22:30:59] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:00 [INFO] [ALLOW] 192.168.1.100 score=0.119
+2026-05-14 22:31:00 [INFO] 127.0.0.1 - - [14/May/2026 22:31:00] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:00 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:00 [INFO] 127.0.0.1 - - [14/May/2026 22:31:00] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:00 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:00 [INFO] 127.0.0.1 - - [14/May/2026 22:31:00] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:00 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:00 [INFO] 127.0.0.1 - - [14/May/2026 22:31:00] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:00 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:00 [INFO] 127.0.0.1 - - [14/May/2026 22:31:00] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:00 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:00 [INFO] 127.0.0.1 - - [14/May/2026 22:31:00] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:01 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:01 [INFO] 127.0.0.1 - - [14/May/2026 22:31:01] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:01 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:01 [INFO] 127.0.0.1 - - [14/May/2026 22:31:01] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:01 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:01 [INFO] 127.0.0.1 - - [14/May/2026 22:31:01] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:01 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:01 [INFO] 127.0.0.1 - - [14/May/2026 22:31:01] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:01 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:01 [INFO] 127.0.0.1 - - [14/May/2026 22:31:01] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:02 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:02 [INFO] 127.0.0.1 - - [14/May/2026 22:31:02] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:02 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:02 [INFO] 127.0.0.1 - - [14/May/2026 22:31:02] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:02 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:02 [INFO] 127.0.0.1 - - [14/May/2026 22:31:02] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:02 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:02 [INFO] 127.0.0.1 - - [14/May/2026 22:31:02] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:02 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:02 [INFO] 127.0.0.1 - - [14/May/2026 22:31:02] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:03 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:03 [INFO] 127.0.0.1 - - [14/May/2026 22:31:03] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:03 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:03 [INFO] 127.0.0.1 - - [14/May/2026 22:31:03] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:03 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:03 [INFO] 127.0.0.1 - - [14/May/2026 22:31:03] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:03 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:03 [INFO] 127.0.0.1 - - [14/May/2026 22:31:03] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:03 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:03 [INFO] 127.0.0.1 - - [14/May/2026 22:31:03] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:04 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:04 [INFO] 127.0.0.1 - - [14/May/2026 22:31:04] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:04 [INFO] 127.0.0.1 - - [14/May/2026 22:31:04] "OPTIONS /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:04 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:04 [INFO] 127.0.0.1 - - [14/May/2026 22:31:04] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:04 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:04 [INFO] 127.0.0.1 - - [14/May/2026 22:31:04] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:04 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:04 [INFO] 127.0.0.1 - - [14/May/2026 22:31:04] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:04 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:04 [INFO] 127.0.0.1 - - [14/May/2026 22:31:04] "POST /api/guard/check HTTP/1.1" 200 -
+2026-05-14 22:31:05 [WARNING] [BLOCK][L1] 192.168.1.100 — Fail rate: 100%
+2026-05-14 22:31:05 [INFO] 127.0.0.1 - - [14/May/2026 22:31:05] "POST /api/guard/check HTTP/1.1" 200 -
