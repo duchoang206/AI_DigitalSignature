@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { UploadCloud, FileText, Send, Shield, Leaf, Ghost, Plus, Fingerprint, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, FileText, Send, Shield, Leaf, Ghost, Plus, Fingerprint, AlertCircle, CheckCircle2, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './index.css';
 
@@ -24,18 +24,19 @@ const getRandomScore = (min: number, max: number) => (Math.random() * (max - min
 export default function App() {
   const [activeTab, setActiveTab] = useState<'employee' | 'manager'>('employee');
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [isManagerAuthenticated, setIsManagerAuthenticated] = useState(false);
   
   const [employeeChat, setEmployeeChat] = useState<ChatMessage[]>([
     { role: 'assistant', text: 'Chào mừng Hoàng Xuân Đức. Hệ thống ký số Zero-Trust đã sẵn sàng. Bạn muốn trình ký tài liệu nào?' }
   ]);
   
   const [managerChat, setManagerChat] = useState<ChatMessage[]>([
-    { role: 'assistant', text: 'Chào Sếp. Nhật ký bảo mật đã được cập nhật bản ghi mới nhất.' }
+    { role: 'assistant', text: 'Chào Sếp. Vui lòng quét mặt để truy cập Nhật ký bảo mật.' }
   ]);
 
   const [webcamState, setWebcamState] = useState<{ 
     isOpen: boolean; 
-    phase: 'signing' | 'approving' | null; 
+    phase: 'signing' | 'approving' | 'manager_login' | null; 
     targetDocId: string | null 
   }>({
     isOpen: false,
@@ -58,6 +59,13 @@ export default function App() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [employeeChat, managerChat, activeTab]);
+
+  // AUTO-TRIGGER MANAGER LOGIN
+  useEffect(() => {
+    if (activeTab === 'manager' && !isManagerAuthenticated && !webcamState.isOpen) {
+      setWebcamState({ isOpen: true, phase: 'manager_login', targetDocId: null });
+    }
+  }, [activeTab, isManagerAuthenticated]);
 
   // WIZARD OF OZ KEYBOARD LISTENER
   useEffect(() => {
@@ -103,10 +111,10 @@ export default function App() {
 
             if (wizardResult === 'fail') {
               setScanResult('fail');
-              const msg = `🚨 CẢNH BÁO: Độ khớp chỉ đạt ${finalScore}%. Nhận diện khuôn mặt thất bại. Đối tượng không phải là nhân viên SurfaceCity. Truy cập bị chặn!`;
+              const msg = `🚨 CẢNH BÁO: Độ khớp chỉ đạt ${finalScore}%. Truy cập bị từ chối. Đối tượng không có quyền quản trị!`;
               if (activeTab === 'employee') setEmployeeChat(prev => [...prev, { role: 'assistant', text: msg, isAlert: true }]);
+              else setManagerChat(prev => [...prev, { role: 'assistant', text: msg, isAlert: true }]);
               
-              // Still push a "Violation Log" to documents
               if (webcamState.phase === 'signing') {
                 const violationDoc: Document = {
                   id: Date.now().toString(),
@@ -120,11 +128,15 @@ export default function App() {
                 setDocuments(prev => [violationDoc, ...prev]);
               }
               
-              setTimeout(() => setWebcamState(prev => ({ ...prev, isOpen: false })), 2000);
+              setTimeout(() => {
+                setWebcamState(prev => ({ ...prev, isOpen: false }));
+                if (webcamState.phase === 'manager_login') setActiveTab('employee');
+              }, 2000);
             } else {
               setScanResult('success');
-              const msg = `✅ Định danh chính xác: Hoàng Xuân Đức (Độ khớp: ${finalScore}%). Đang giải mã Private Key và tạo chữ ký số ECDSA...`;
+              const msg = `✅ Xác thực thành công (Độ khớp: ${finalScore}%). Quyền quản trị đã được mở khóa.`;
               if (activeTab === 'employee') setEmployeeChat(prev => [...prev, { role: 'assistant', text: msg }]);
+              else setManagerChat(prev => [...prev, { role: 'assistant', text: msg }]);
               
               setTimeout(() => handleScanSuccess(), 1000);
             }
@@ -150,7 +162,9 @@ export default function App() {
     const { phase, targetDocId } = webcamState;
     setWebcamState(prev => ({ ...prev, isOpen: false }));
 
-    if (phase === 'signing') {
+    if (phase === 'manager_login') {
+      setIsManagerAuthenticated(true);
+    } else if (phase === 'signing') {
       const fileName = activeFileName || "Bao_cao_tai_chinh.pdf";
       const newDoc: Document = {
         id: Date.now().toString(),
@@ -192,7 +206,6 @@ export default function App() {
 
   const currentChat = activeTab === 'employee' ? employeeChat : managerChat;
 
-  // Stats for Manager
   const stats = {
     total: documents.length,
     pending: documents.filter(d => d.status === 'Chờ duyệt').length,
@@ -218,13 +231,13 @@ export default function App() {
             animate={{ left: activeTab === 'employee' ? '4px' : 'calc(50% + 0px)' }}
             transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
           />
-          <button onClick={() => setActiveTab('employee')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all relative z-10 ${activeTab === 'employee' ? 'text-emerald-300' : 'text-zinc-500'}`}>Nhân viên</button>
+          <button onClick={() => { setActiveTab('employee'); setIsManagerAuthenticated(false); }} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all relative z-10 ${activeTab === 'employee' ? 'text-emerald-300' : 'text-zinc-500'}`}>Nhân viên</button>
           <button onClick={() => setActiveTab('manager')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all relative z-10 ${activeTab === 'manager' ? 'text-emerald-300' : 'text-zinc-500'}`}>Quản trị viên</button>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Security Audit Active</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-900">{isManagerAuthenticated ? 'Sếp đã đăng nhập' : 'Zero-Trust Protection'}</span>
         </div>
       </header>
 
@@ -253,7 +266,7 @@ export default function App() {
                   )}
                 </div>
               </motion.div>
-            ) : (
+            ) : isManagerAuthenticated ? (
               <motion.div key="manager" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-6xl mx-auto h-full flex flex-col">
                 <div className="mb-12 flex justify-between items-end">
                   <div><h2 className="text-4xl font-extrabold tracking-tight mb-2">Trung tâm Điều hành</h2><p className="text-emerald-400/40 text-sm font-medium italic">Security Audit & Violation Logs.</p></div>
@@ -307,6 +320,18 @@ export default function App() {
                   </table>
                 </div>
               </motion.div>
+            ) : (
+              <motion.div key="manager_lock" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center h-full">
+                 <div className="bg-zinc-900/60 border border-emerald-500/20 p-12 rounded-[3rem] backdrop-blur-xl text-center max-w-md shadow-2xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none" />
+                    <div className="w-20 h-20 bg-emerald-600/20 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                       <Lock size={40} className="text-emerald-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4">Cổng vào Quản trị viên</h3>
+                    <p className="text-sm text-zinc-500 leading-relaxed mb-8">Bạn cần thực hiện quét mặt xác thực danh tính để truy cập vào trung tâm điều hành bảo mật.</p>
+                    <button onClick={() => setWebcamState({ isOpen: true, phase: 'manager_login', targetDocId: null })} className="px-8 py-4 bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition-all">Bắt đầu quét mặt</button>
+                 </div>
+              </motion.div>
             )}
           </AnimatePresence>
 
@@ -316,14 +341,11 @@ export default function App() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] flex items-center justify-center bg-zinc-950/90 backdrop-blur-md p-10">
                  <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className={`bg-zinc-900 border ${scanResult === 'fail' ? 'border-red-500' : scanResult === 'success' ? 'border-emerald-500' : 'border-emerald-900/20'} rounded-[3rem] overflow-hidden shadow-2xl max-w-2xl w-full relative transition-colors duration-500`}>
                     <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-30 pointer-events-none font-mono text-[9px] uppercase">
-                       <div className="text-emerald-400/60">MODEL: FaceNet-v512<br />ID: HOANG XUAN DUC</div>
+                       <div className="text-emerald-400/60">MODEL: FaceNet-v512<br />ID: AUTHORIZED USER</div>
                        <div className="text-right text-emerald-400/60">STATUS: {scanResult === 'scanning' ? 'SCANNING' : scanResult.toUpperCase()}<br />MATCH: {confidence}%</div>
                     </div>
                     <div className="relative aspect-video bg-black overflow-hidden">
                        <video ref={videoRef} className={`w-full h-full object-cover grayscale opacity-50 ${scanResult === 'fail' ? 'sepia-[0.5] hue-rotate-[-50deg]' : ''}`} muted playsInline />
-                       <div className="absolute inset-0 grid grid-cols-10 grid-rows-10 opacity-10 pointer-events-none">
-                          {Array.from({ length: 100 }).map((_, i) => <div key={i} className="border-[0.5px] border-emerald-500/20" />)}
-                       </div>
                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <motion.div animate={{ width: '260px', height: '260px' }} className={`relative border-2 ${scanResult === 'fail' ? 'border-red-500 shadow-[0_0_30px_#ef4444]' : scanResult === 'success' ? 'border-emerald-500 shadow-[0_0_20px_#10b981]' : 'border-emerald-500/30'} rounded-3xl flex items-center justify-center`}>
                              <Plus size={20} className="absolute -top-3 -left-3 text-emerald-400" /><Plus size={20} className="absolute -top-3 -right-3 text-emerald-400" /><Plus size={20} className="absolute -bottom-3 -left-3 text-emerald-400" /><Plus size={20} className="absolute -bottom-3 -right-3 text-emerald-400" />
