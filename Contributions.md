@@ -25,7 +25,7 @@ Xây dựng mô hình AI để nhận diện hành vi xâm nhập dựa trên d�
 Công nghệ sử dụng: Python, ECDSA, Machine Learning, v.v.
 
 2. Cách để chứng minh "Tôi có đóng góp thật"
-Nhà tuyển dụng sẽ check xem bạn làm gì trong đó. Bạn cần chuẩn bị:
+Nhà tuyển dụng sẽ check xem bạn làm gì trong đó. Bạn cần chuẩn bị::
 
 Insights/Contributors: Khi nhấn vào mục Insights -> Contributors trên GitHub, tên của bạn (truong22000129) sẽ hiện ra với số lượng commit và dòng code cụ thể. Đây là bằng chứng thép.
 
