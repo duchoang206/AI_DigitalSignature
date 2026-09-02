@@ -3,3 +3,4 @@ Commit 1: Cập nhật cấu hình môi trường
 Commit 2: Tinh chỉnh giao diện người dùng
 Commit 3: Tối ưu hóa mã nguồn API
 Commit 4: Bổ sung tài liệu hướng dẫn
+Commit 5: Sửa lỗi hiển thị trên thiết bị di động
