@@ -8,3 +8,4 @@ Commit 6: Cập nhật thư viện phụ thuộc
 Commit 7: Cải thiện hiệu năng xử lý dữ liệu
 Commit 8: Thêm tính năng xác thực người dùng
 Commit 9: Hoàn thiện luồng thanh toán
+Commit 10: Kiểm thử các chức năng chính
