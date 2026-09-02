@@ -1,0 +1,1 @@
+Commit 0: Khởi tạo file log cho hệ thống
