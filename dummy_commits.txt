@@ -1,1 +1,2 @@
 Commit 0: Khởi tạo file log cho hệ thống
+Commit 1: Cập nhật cấu hình môi trường
